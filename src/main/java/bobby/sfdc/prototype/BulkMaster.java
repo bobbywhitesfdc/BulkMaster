@@ -53,7 +53,7 @@ public class BulkMaster  {
 	private static final String CONSUMER_KEY_PROP = "consumer.key";
 	private static final String CONSUMER_SECRET_PROP = "consumer.secret";
 	private static final String LOGIN_URL_PROP = "login.url";
-	
+
 	private Gson _gson;
 	private String _authToken=null;
 	private String _instanceUrl=null;
@@ -98,6 +98,8 @@ public class BulkMaster  {
 			
 			mgr.setLoginUrl(loginUrl);		
 			mgr.getAuthToken(userId, password);
+
+			System.out.println("Instance URL:" + mgr.getInstanceUrl());
 						
 
 			
