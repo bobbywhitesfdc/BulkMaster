@@ -7,14 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.TreeMap;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,7 +18,6 @@ import org.apache.http.client.utils.URIBuilder;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -33,14 +25,11 @@ import org.joda.time.format.DateTimeFormatter;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
 import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
-import bobby.sfdc.soql.Info;
-import bobby.sfdc.soql.SOQLHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import bobby.sfdc.prototype.rest.APIExecutor;
-
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
 
@@ -53,8 +42,6 @@ import bobby.sfdc.prototype.bulkv2.json.*;
  */
 public class BulkMaster  {
 	public static final String DEFAULT_LOGIN_URL = "https://login.salesforce.com";
-	private static final char SINGLE_QUOTE = '\'';
-	private static final String EXECUTE_SOQL_RESOURCE = "/services/data/v45.0/query";
 	private static final String CONSUMER_KEY_PROP = "consumer.key";
 	private static final String CONSUMER_SECRET_PROP = "consumer.secret";
 	private static final String LOGIN_URL_PROP = "login.url";
@@ -63,12 +50,12 @@ public class BulkMaster  {
 	private String _authToken=null;
 	private String _instanceUrl=null;
 	private boolean _isInitialized=false;
-	private Map<String,Info> infoCache = new TreeMap<String,Info>();
 	private String consumerKey=null;
 	private String consumerSecret=null;
 	private String loginUrl=null;
-	private Map<String, String> queryTemplates;
 	private String _id;
+	private String jobId;
+	private String objectName;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -98,6 +85,8 @@ public class BulkMaster  {
 				ccEmail = null;
 			}
 			
+			mgr.setOptionsFromCommandlineFlags(args);
+			
 						
 			mgr.initConnectedAppFromConfigFile("/connectedapp.properties");
 			
@@ -105,6 +94,8 @@ public class BulkMaster  {
 			mgr.getAuthToken(userId, password);
 
 			System.out.println("Instance URL:" + mgr.getInstanceUrl());
+			
+
 
 			GetAllJobsResponse jobs = mgr.getJobs();
 			System.out.println("Jobs" + jobs);
@@ -147,14 +138,71 @@ public class BulkMaster  {
 			System.out.println("-"+ flag.getLabel() + " " + flag.getDescription());
 		}
 	}
+	
+	/**
+	 * Process the Commandline Flags to set parameters for the News Feed
+	 * @param args
+	 */
+	public void setOptionsFromCommandlineFlags(String[] args) {
+	
+		for (String flag : args) {
+			if (!flag.startsWith("-")) {
+				// it's not a flag, skip it
+				continue;
+			} 
+			String parts[] = flag.substring(1).split(":");
+			String flagPart = parts.length >= 1 ? parts[0] : "";
+			String valuePart = parts.length > 1 ? parts[1] : "";
+			
+			
+			if (flagPart.compareToIgnoreCase(Flags.JOBID.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Invalid JobID!"+valuePart);
+				} else {
+					this.jobId = valuePart;	
+				}
+			}
+			
+			if (flagPart.compareToIgnoreCase(Flags.LIST.getLabel())==0) {
+				// Command is List Jobs
+			}
+			
+			if (flagPart.compareToIgnoreCase(Flags.STATUS.getLabel())==0) {
+				// Command is Get Job Status
+			}
+			
+			if (flagPart.compareToIgnoreCase(Flags.INSERT.getLabel())==0) {
+				// Command is INSERT records
+			}
+			if (flagPart.compareToIgnoreCase(Flags.RESULTS.getLabel())==0) {
+				// Command is download RESULTS
+			}			
+			if (flagPart.compareToIgnoreCase(Flags.OBJECTNAME.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing Objectname!");
+				} else {
+					this.objectName = valuePart;	
+				}				
+			}
+			
+		}
+		return;
+	}
+
 
 	
 	public enum Flags {
-		FREQUENCY("F","Frequency - W(weekly), D(daily), or E(epoc)"), 
-		DEPTH("D","Depth - A(All) F(Fewer) items"), 
-		PAGESIZE("P","Maximum number of Feed Items to retrieve [1..100]"),
-		BUNDLESIZE("B","Element Bundle size [0..10]"), 
-		COMMENTCOUNT("C","Max Comments to retrieve  [0..25]");
+		LIST("l","List Jobs"),
+		INSERT("i","Insert Records"),
+		UPSERT("u","Upsert Records"),
+		DELETE("d","Delete Records"),
+		STATUS("s","Get Job Status"),
+		RESULTS("r","Get Job results"),
+		JOBID("j","Hex ID of the Job"), 
+		INPUTFILE("f","Input filename"), 
+		OUTPUTDIR("D","Output Directory"),
+		EXTERNALID("x","External ID fieldname for Upsert"),
+		OBJECTNAME("o","Object name for Insert, Update, or Delete");
 		private String label;
 		private String description;
 

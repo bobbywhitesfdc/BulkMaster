@@ -29,6 +29,10 @@ public class JobInfo {
 		builder.append(state);
 		builder.append(" concurrencyMode=");
 		builder.append(concurrencyMode);
+		builder.append(" contentUrl=");
+		builder.append(contentUrl);
+		builder.append(" lineEnding=");
+		builder.append(lineEnding);
 		builder.append(" systemModstamp=");
 		builder.append(systemModstamp);
 
