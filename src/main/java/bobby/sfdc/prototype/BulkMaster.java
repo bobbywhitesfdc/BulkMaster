@@ -39,6 +39,11 @@ import bobby.sfdc.soql.SOQLHelper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import bobby.sfdc.prototype.rest.APIExecutor;
+
+import bobby.sfdc.prototype.bulkv2.*;
+import bobby.sfdc.prototype.bulkv2.json.*;
+
 
 /**
  * Commandline Interface to execute Bulk API 2.0 jobs
@@ -100,14 +105,33 @@ public class BulkMaster  {
 			mgr.getAuthToken(userId, password);
 
 			System.out.println("Instance URL:" + mgr.getInstanceUrl());
-						
 
+			GetAllJobsResponse jobs = mgr.getJobs();
+			System.out.println("Jobs" + jobs);
+						
 			
 		} catch (Throwable t) {
 			_logger.log(Level.SEVERE,t.getMessage());
 		}
 		
 	}
+
+	/**
+	 * Get the Bulk API Jobs information
+	 * 
+	 * @throws Throwable 
+	 */
+	public GetAllJobsResponse getJobs() throws Throwable {
+	    CloseableHttpClient client = HttpClientBuilder.create().build();
+	    URIBuilder builder = new URIBuilder(getInstanceUrl() + GetAllJobs.RESOURCE);
+
+
+		HttpGet getJobs = new HttpGet(builder.build());
+		APIExecutor<GetAllJobsResponse> api = new APIExecutor<GetAllJobsResponse>(GetAllJobsResponse.class,getAuthToken());
+		return api.processAPIResponse(client, getJobs);
+		
+	}
+
 
 	/**
 	 * 
