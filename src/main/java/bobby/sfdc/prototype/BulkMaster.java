@@ -54,8 +54,9 @@ public class BulkMaster  {
 	private String consumerSecret=null;
 	private String loginUrl=null;
 	private String _id;
-	private String jobId;
-	private String objectName;
+	private Commands currentCommand=Commands.LIST; // Default Command
+	private String jobId=null;
+	private String objectName=null;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -95,15 +96,37 @@ public class BulkMaster  {
 
 			System.out.println("Instance URL:" + mgr.getInstanceUrl());
 			
-
-
-			GetAllJobsResponse jobs = mgr.getJobs();
-			System.out.println("Jobs" + jobs);
-						
+			mgr.executeCommand();
 			
 		} catch (Throwable t) {
 			_logger.log(Level.SEVERE,t.getMessage());
 		}
+		
+	}
+
+	private void executeCommand() throws Throwable {
+		
+		switch(this.currentCommand) {
+		case LIST:
+			GetAllJobsResponse jobs = listJobs();
+			System.out.println("Jobs" + jobs);
+			break;
+		case DELETE:
+			break;
+		case INSERT:
+			break;
+		case RESULTS:
+			break;
+		case STATUS:
+			System.out.println(getStatus(jobId));
+			break;
+		case UPSERT:
+			break;
+		default:
+			break;
+		}
+
+					
 		
 	}
 
@@ -112,7 +135,7 @@ public class BulkMaster  {
 	 * 
 	 * @throws Throwable 
 	 */
-	public GetAllJobsResponse getJobs() throws Throwable {
+	public GetAllJobsResponse listJobs() throws Throwable {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + GetAllJobs.RESOURCE);
 
@@ -122,6 +145,21 @@ public class BulkMaster  {
 		return api.processAPIResponse(client, getJobs);
 		
 	}
+	
+	/**
+	 * Get Bulk API Job Status information for a single Job
+	 * 
+	 * @throws Throwable 
+	 */
+	public JobInfo getStatus(String jobId) throws Throwable {
+	    CloseableHttpClient client = HttpClientBuilder.create().build();
+	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(GetJobInfo.RESOURCE,"jobId",jobId));
+
+		HttpGet getInfo = new HttpGet(builder.build());
+		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());
+		return api.processAPIResponse(client, getInfo);
+	}
+
 
 
 	/**
@@ -164,19 +202,20 @@ public class BulkMaster  {
 			}
 			
 			if (flagPart.compareToIgnoreCase(Flags.LIST.getLabel())==0) {
-				// Command is List Jobs
+				this.currentCommand=Commands.LIST;
 			}
 			
 			if (flagPart.compareToIgnoreCase(Flags.STATUS.getLabel())==0) {
-				// Command is Get Job Status
+				this.currentCommand=Commands.STATUS;
 			}
 			
 			if (flagPart.compareToIgnoreCase(Flags.INSERT.getLabel())==0) {
-				// Command is INSERT records
+				this.currentCommand=Commands.INSERT;
 			}
 			if (flagPart.compareToIgnoreCase(Flags.RESULTS.getLabel())==0) {
-				// Command is download RESULTS
-			}			
+				this.currentCommand=Commands.RESULTS;
+			}
+			
 			if (flagPart.compareToIgnoreCase(Flags.OBJECTNAME.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing Objectname!");
@@ -189,7 +228,19 @@ public class BulkMaster  {
 		return;
 	}
 
-
+	/**
+	 * Define the Commands this processor implements
+	 * @author bobby.white
+	 *
+	 */
+	public enum Commands {
+		LIST,
+		INSERT,
+		UPSERT,
+		DELETE,
+		STATUS,
+		RESULTS
+	}
 	
 	public enum Flags {
 		LIST("l","List Jobs"),
