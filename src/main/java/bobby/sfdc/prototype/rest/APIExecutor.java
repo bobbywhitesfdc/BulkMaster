@@ -6,9 +6,13 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 
@@ -53,13 +57,28 @@ public class APIExecutor<ResponseClassType> {
 	 * @throws ClientProtocolException
 	 * @throws AuthenticationException
 	 */
-	public  ResponseClassType processAPIResponse(CloseableHttpClient client, HttpGet apiOperation) throws IOException,
+	private  ResponseClassType processAPIResponse(CloseableHttpClient client, HttpRequest apiOperation) throws IOException,
 			ClientProtocolException, AuthenticationException {
 		String rawJsonResponse=null;
+		String uri=null;
 		try {
 			apiOperation.addHeader("Authorization","Bearer "+ this.authToken);
 
-			HttpResponse response = client.execute(apiOperation);
+			HttpResponse response=null;
+			if (apiOperation instanceof HttpGet) {
+				response = client.execute((HttpGet) apiOperation);
+				uri = ((HttpGet)apiOperation).getURI().toString();
+			} else if (apiOperation instanceof HttpPost) {
+				response = client.execute((HttpPost) apiOperation);
+				uri = ((HttpPost)apiOperation).getURI().toString();
+			} else if (apiOperation instanceof HttpPatch) {
+				response = client.execute((HttpPatch) apiOperation);
+				uri = ((HttpPatch)apiOperation).getURI().toString();
+			} else if (apiOperation instanceof HttpPut) {
+				response = client.execute((HttpPut) apiOperation);				
+				uri = ((HttpPut)apiOperation).getURI().toString();
+			}	
+			
 			int code = response.getStatusLine().getStatusCode();
 			
 			_logger.info(response.getStatusLine().toString());
@@ -83,7 +102,7 @@ public class APIExecutor<ResponseClassType> {
 				
 
 			} else {
-				_logger.info(apiOperation.getURI().toString());
+				_logger.info(uri);
 				// The call failed for some reason
 				if (rawJsonResponse != null && rawJsonResponse.startsWith("{")) {
 				    OAuthErrorResponse errorResponse = new Gson().fromJson(rawJsonResponse, OAuthErrorResponse.class);
@@ -98,6 +117,39 @@ public class APIExecutor<ResponseClassType> {
 			client.close();
 		}
 	}
+
+	
+	/**
+	 * @param client
+	 * @param apiOperation HTTP-GET call to execute
+	 * @param responseClass JavaClass which represents the expected JSON response from the API
+	 * @return an instance of the responseClass or an exception
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws AuthenticationException
+	 */
+	public  ResponseClassType processAPIGetResponse(CloseableHttpClient client, HttpGet apiOperation) throws IOException,
+			ClientProtocolException, AuthenticationException {
+		return processAPIResponse(client,apiOperation);
+	}
+	
+	/**
+	 * @param client
+	 * @param apiOperation HTTP-PATCH call to execute
+	 * @param responseClass JavaClass which represents the expected JSON response from the API
+	 * @return an instance of the responseClass or an exception
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws AuthenticationException
+	 */
+	public ResponseClassType processAPIPatchResponse(CloseableHttpClient client, HttpPatch patchJob) throws ClientProtocolException,
+			IOException, AuthenticationException {
+		return processAPIResponse(client,patchJob);
+	}
+
+
+
+
 	
 	/**
 	 * Convenience method to allow caller to reparse a result without repeating the server call
@@ -166,7 +218,4 @@ public class APIExecutor<ResponseClassType> {
 	public int getHttpResultCode() {
 		return httpResultCode;
 	}
-
-
-
 }

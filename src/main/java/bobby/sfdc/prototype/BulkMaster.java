@@ -12,10 +12,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpException;
-import org.apache.http.HttpResponse;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.utils.URIBuilder;
-
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.joda.time.DateTime;
@@ -108,7 +109,7 @@ public class BulkMaster  {
 		
 		switch(this.currentCommand) {
 		case LIST:
-			GetAllJobsResponse jobs = listJobs();
+			GetAllJobsResponse jobs = listJobsCommand();
 			System.out.println("Jobs" + jobs);
 			break;
 		case DELETE:
@@ -118,7 +119,12 @@ public class BulkMaster  {
 		case RESULTS:
 			break;
 		case STATUS:
-			System.out.println(getStatus(jobId));
+			System.out.println(getStatusCommand(jobId));
+			break;
+		case CLOSEJOB:
+			System.out.println(closeJobCommand(jobId));
+			break;
+		case ABORTJOB:
 			break;
 		case UPSERT:
 			break;
@@ -135,14 +141,14 @@ public class BulkMaster  {
 	 * 
 	 * @throws Throwable 
 	 */
-	public GetAllJobsResponse listJobs() throws Throwable {
+	public GetAllJobsResponse listJobsCommand() throws Throwable {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + GetAllJobs.RESOURCE);
 
 
 		HttpGet getJobs = new HttpGet(builder.build());
 		APIExecutor<GetAllJobsResponse> api = new APIExecutor<GetAllJobsResponse>(GetAllJobsResponse.class,getAuthToken());
-		return api.processAPIResponse(client, getJobs);
+		return api.processAPIGetResponse(client, getJobs);
 		
 	}
 	
@@ -151,14 +157,37 @@ public class BulkMaster  {
 	 * 
 	 * @throws Throwable 
 	 */
-	public JobInfo getStatus(String jobId) throws Throwable {
+	public JobInfo getStatusCommand(String jobId) throws Throwable {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(GetJobInfo.RESOURCE,"jobId",jobId));
 
 		HttpGet getInfo = new HttpGet(builder.build());
 		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());
-		return api.processAPIResponse(client, getInfo);
+		return api.processAPIGetResponse(client, getInfo);
 	}
+	
+	/**
+	 * Get Bulk API Job Status information for a single Job
+	 * 
+	 * @throws Throwable 
+	 */
+	public JobInfo closeJobCommand(String jobId) throws Throwable {
+	    CloseableHttpClient client = HttpClientBuilder.create().build();
+	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(GetJobInfo.RESOURCE,"jobId",jobId));
+
+		HttpPatch patchJob = new HttpPatch(builder.build());
+		CloseJobRequest request = new CloseJobRequest();
+		request.state= CloseJobRequest.UPLOADCOMPLETE;
+		
+		patchJob.setEntity(new StringEntity(request.toJson()));
+		patchJob.setHeader(HttpHeaders.ACCEPT,"application/json");
+		patchJob.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+
+		
+		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());
+		return api.processAPIPatchResponse(client, patchJob);
+	}
+
 
 
 
@@ -208,6 +237,12 @@ public class BulkMaster  {
 			if (flagPart.compareToIgnoreCase(Flags.STATUS.getLabel())==0) {
 				this.currentCommand=Commands.STATUS;
 			}
+			if (flagPart.compareToIgnoreCase(Flags.CLOSEJOB.getLabel())==0) {
+				this.currentCommand=Commands.CLOSEJOB;
+			}
+			if (flagPart.compareToIgnoreCase(Flags.ABORTJOB.getLabel())==0) {
+				this.currentCommand=Commands.ABORTJOB;
+			}
 			
 			if (flagPart.compareToIgnoreCase(Flags.INSERT.getLabel())==0) {
 				this.currentCommand=Commands.INSERT;
@@ -239,6 +274,8 @@ public class BulkMaster  {
 		UPSERT,
 		DELETE,
 		STATUS,
+		CLOSEJOB,
+		ABORTJOB,
 		RESULTS
 	}
 	
@@ -248,6 +285,8 @@ public class BulkMaster  {
 		UPSERT("u","Upsert Records"),
 		DELETE("d","Delete Records"),
 		STATUS("s","Get Job Status"),
+		CLOSEJOB("c","Close Job"),
+		ABORTJOB("a","Abort Job"),
 		RESULTS("r","Get Job results"),
 		JOBID("j","Hex ID of the Job"), 
 		INPUTFILE("f","Input filename"), 
