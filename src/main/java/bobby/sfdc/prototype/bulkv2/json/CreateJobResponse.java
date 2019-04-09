@@ -1,19 +1,19 @@
 package bobby.sfdc.prototype.bulkv2.json;
 
 public class CreateJobResponse {
-	String apiVersion;
-	String columnDelimiter;
-	String concurrencyMode;
-	String contentType;
-	String contentUrl;
-	String createdById;
-	String createdDate;
-	String externalIdFieldName;
-	String id;
-	String jobType;
-	String lineEnding;
-	String state;
-	String systemModstamp;	
+	public String apiVersion;
+	public String columnDelimiter;
+	public String concurrencyMode;
+	public String contentType;
+	public String contentUrl;
+	public String createdById;
+	public String createdDate;
+	public String externalIdFieldName;
+	public String id;
+	public String jobType;
+	public String lineEnding;
+	public String state;
+	public String systemModstamp;	
 }
 
 /**

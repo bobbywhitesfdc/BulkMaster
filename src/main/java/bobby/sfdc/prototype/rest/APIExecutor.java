@@ -62,7 +62,7 @@ public class APIExecutor<ResponseClassType> {
 		String rawJsonResponse=null;
 		String uri=null;
 		try {
-			apiOperation.addHeader("Authorization","Bearer "+ this.authToken);
+			setAuthenticationHeader(apiOperation,this.authToken);
 
 			HttpResponse response=null;
 			if (apiOperation instanceof HttpGet) {
@@ -99,7 +99,9 @@ public class APIExecutor<ResponseClassType> {
 					handleJsonSyntaxException(rawJsonResponse, e);
 					return null;
 				}
-				
+			} else if (code==201) {
+				// File Upload successful
+				return null;
 
 			} else {
 				_logger.info(uri);
@@ -116,6 +118,10 @@ public class APIExecutor<ResponseClassType> {
 		} finally {		
 			client.close();
 		}
+	}
+
+	public static void setAuthenticationHeader(HttpRequest apiOperation, String authToken) {
+		apiOperation.addHeader("Authorization","Bearer "+ authToken);
 	}
 
 	
@@ -146,7 +152,30 @@ public class APIExecutor<ResponseClassType> {
 			IOException, AuthenticationException {
 		return processAPIResponse(client,patchJob);
 	}
-
+	/**
+	 * @param client
+	 * @param apiOperation HTTP-POST call to execute
+	 * @param responseClass JavaClass which represents the expected JSON response from the API
+	 * @return an instance of the responseClass or an exception
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws AuthenticationException
+	 */
+	public ResponseClassType processAPIPostResponse(CloseableHttpClient client, HttpPost post) throws ClientProtocolException, IOException, AuthenticationException {
+		return processAPIResponse(client,post);	
+	}
+	/**
+	 * @param client
+	 * @param apiOperation HTTP-POST call to execute
+	 * @param responseClass JavaClass which represents the expected JSON response from the API
+	 * @return an instance of the responseClass or an exception
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws AuthenticationException
+	 */
+	public ResponseClassType processAPIPostResponse(CloseableHttpClient client, HttpPut put) throws ClientProtocolException, IOException, AuthenticationException {
+		return processAPIResponse(client,put);	
+	}
 
 
 

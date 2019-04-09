@@ -4,4 +4,9 @@ dist
 .DS_Store
 .settings
 .classpath
+target/
+output/
 target
+output
+
+

@@ -3,25 +3,15 @@
  */
 package bobby.sfdc.prototype;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import org.apache.http.client.ClientProtocolException;
 
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
@@ -30,7 +20,6 @@ import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import bobby.sfdc.prototype.rest.APIExecutor;
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
 
@@ -58,12 +47,12 @@ public class BulkMaster  {
 	private Commands currentCommand=Commands.LIST; // Default Command
 	private String jobId=null;
 	private String objectName=null;
+	private String externalIdFieldName=null;
+	private String inputFileName="";
+	private String outputDir="."; // Default to "here"
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
-	protected static DateTimeFormatter dateInputFormatter = DateTimeFormat.forPattern(DATE_INPUT_PATTERN);
-
-
 
 	public static void main(String[] args) {
 		BulkMaster mgr = new BulkMaster();
@@ -112,21 +101,40 @@ public class BulkMaster  {
 			GetAllJobsResponse jobs = listJobsCommand();
 			System.out.println("Jobs" + jobs);
 			break;
-		case DELETE:
-			break;
 		case INSERT:
+			{
+				CreateJobResponse result = createJobCommand(objectName,"insert","");
+				uploadFileOperation(result.contentUrl,inputFileName);
+				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+			}
+			break;
+		case UPSERT:
+			{
+				CreateJobResponse result = createJobCommand(objectName,"upsert",this.externalIdFieldName);
+				uploadFileOperation(result.contentUrl,inputFileName);
+				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+			}
+			break;
+		case DELETE:
+			{
+				CreateJobResponse result = createJobCommand(objectName,"delete","");
+				uploadFileOperation(result.contentUrl,inputFileName);
+				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+			}
 			break;
 		case RESULTS:
+			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.SUCCESS,outputDir));
+			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.FAILED,outputDir));
+			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
 			break;
 		case STATUS:
 			System.out.println(getStatusCommand(jobId));
 			break;
 		case CLOSEJOB:
-			System.out.println(closeJobCommand(jobId));
+			System.out.println(closeJobCommand(jobId,CloseJobRequest.UPLOADCOMPLETE));
 			break;
 		case ABORTJOB:
-			break;
-		case UPSERT:
+			System.out.println(closeJobCommand(jobId,CloseJobRequest.ABORTED));
 			break;
 		default:
 			break;
@@ -136,20 +144,27 @@ public class BulkMaster  {
 		
 	}
 
+	private String getResultsCommand(String jobId, GetJobResults.RESULTKIND kind, String outputDir) throws ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
+		return new GetJobResults(getInstanceUrl(),getAuthToken()).execute(jobId,kind,outputDir);
+	}
+
+	private void uploadFileOperation(String contentUrl, String inputFileName) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
+		UploadJob upload = new UploadJob(getInstanceUrl(),getAuthToken());
+		upload.execute(contentUrl,inputFileName);
+	}
+
+	private CreateJobResponse createJobCommand(String objectName, String operation, String externalIdFieldName) throws Throwable {
+		CreateJob creator = new CreateJob(getInstanceUrl(),getAuthToken());
+		return creator.execute(objectName,operation,externalIdFieldName);
+	}
+
 	/**
 	 * Get the Bulk API Jobs information
 	 * 
 	 * @throws Throwable 
 	 */
 	public GetAllJobsResponse listJobsCommand() throws Throwable {
-	    CloseableHttpClient client = HttpClientBuilder.create().build();
-	    URIBuilder builder = new URIBuilder(getInstanceUrl() + GetAllJobs.RESOURCE);
-
-
-		HttpGet getJobs = new HttpGet(builder.build());
-		APIExecutor<GetAllJobsResponse> api = new APIExecutor<GetAllJobsResponse>(GetAllJobsResponse.class,getAuthToken());
-		return api.processAPIGetResponse(client, getJobs);
-		
+		return new GetAllJobs(getInstanceUrl(),getAuthToken()).execute();
 	}
 	
 	/**
@@ -157,35 +172,17 @@ public class BulkMaster  {
 	 * 
 	 * @throws Throwable 
 	 */
-	public JobInfo getStatusCommand(String jobId) throws Throwable {
-	    CloseableHttpClient client = HttpClientBuilder.create().build();
-	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(GetJobInfo.RESOURCE,"jobId",jobId));
-
-		HttpGet getInfo = new HttpGet(builder.build());
-		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());
-		return api.processAPIGetResponse(client, getInfo);
+	public JobInfo getStatusCommand(final String jobId) throws Throwable {
+		return new GetJobInfo(getInstanceUrl(),getAuthToken()).execute(jobId);
 	}
 	
 	/**
-	 * Get Bulk API Job Status information for a single Job
+	 * Close an existing Bulk API V2 Job - either UploadCompleted or Aborted
 	 * 
 	 * @throws Throwable 
 	 */
-	public JobInfo closeJobCommand(String jobId) throws Throwable {
-	    CloseableHttpClient client = HttpClientBuilder.create().build();
-	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(GetJobInfo.RESOURCE,"jobId",jobId));
-
-		HttpPatch patchJob = new HttpPatch(builder.build());
-		CloseJobRequest request = new CloseJobRequest();
-		request.state= CloseJobRequest.UPLOADCOMPLETE;
-		
-		patchJob.setEntity(new StringEntity(request.toJson()));
-		patchJob.setHeader(HttpHeaders.ACCEPT,"application/json");
-		patchJob.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-
-		
-		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());
-		return api.processAPIPatchResponse(client, patchJob);
+	public JobInfo closeJobCommand(String jobId, String subCommand) throws Throwable {
+		return new CloseJob(getInstanceUrl(),getAuthToken()).execute(jobId, subCommand);
 	}
 
 
@@ -258,6 +255,29 @@ public class BulkMaster  {
 					this.objectName = valuePart;	
 				}				
 			}
+			if (flagPart.compareToIgnoreCase(Flags.EXTERNALID.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing ExternalID fieldname!");
+				} else {
+					this.externalIdFieldName = valuePart;	
+				}				
+			}
+			
+			if (flagPart.compareToIgnoreCase(Flags.INPUTFILE.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing filename!");
+				} else {
+					this.inputFileName = valuePart;	
+				}				
+			}
+			if (flagPart.compareToIgnoreCase(Flags.OUTPUTDIR.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing output directory name!");
+				} else {
+					this.outputDir = valuePart;	
+				}				
+			}
+
 			
 		}
 		return;
@@ -391,7 +411,7 @@ public class BulkMaster  {
 	 * @param value - the value to be substituted
 	 * @return
 	 */
-	private String getURLFromURLTemplate(
+	public static String getURLFromURLTemplate(
 			String templateURL, String parameterName,
 			String value) {
 		
@@ -411,20 +431,7 @@ public class BulkMaster  {
 		}
 		
 		return templateURL.replace(marker, value);
-	}
-
-	/*
-	 * Convert a String to a Joda DateTime
-	 * */
-	private DateTime convertToDateTime(String stringDate) {
-		if (stringDate==null) {
-			return null;
-		} else {
-			return dateInputFormatter.parseDateTime(stringDate);
-		}
-	}
-
-	
+	}	
 
 	private void registerGsonDeserializers() {
 		GsonBuilder gsonBuilder = new GsonBuilder();
