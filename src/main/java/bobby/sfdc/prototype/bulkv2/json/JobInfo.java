@@ -17,6 +17,12 @@ public class JobInfo {
 	String lineEnding;
 	String state;
 	String systemModstamp;
+	String object;
+	String operation;
+	int retries;
+	int numberRecordsFailed;
+	int numberRecordsProcessed;
+	long totalProcessingTime;
 
 	@Override
 	public String toString() {

@@ -1,6 +1,7 @@
 package bobby.sfdc.prototype.bulkv2;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.logging.Logger;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.ClientProtocolException;
@@ -13,8 +14,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import bobby.sfdc.prototype.bulkv2.json.*;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.APIExecutor;
+import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
-public class CreateJob extends AbstractBulkJob {
+public class CreateJob extends AbstractAPIBase {
+	private static final Logger _logger = Logger.getLogger(CreateJob.class.getName());
+
 	public CreateJob(String instanceUrl, String authToken) {
 		super(instanceUrl,authToken);
 	}
@@ -22,6 +26,7 @@ public class CreateJob extends AbstractBulkJob {
     public static final String METHOD="POST";
 	public CreateJobResponse execute(final String objectName, final String operation, final String externalIdFieldName) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
+	    try {
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + RESOURCE);
 
 		HttpPost post = new HttpPost(builder.build());
@@ -39,6 +44,11 @@ public class CreateJob extends AbstractBulkJob {
 
 		
 		APIExecutor<CreateJobResponse> api = new APIExecutor<CreateJobResponse>(CreateJobResponse.class,getAuthToken());
-		return api.processAPIPostResponse(client, post);
+		CreateJobResponse result = api.processAPIPostResponse(client, post);
+		_logger.info("JobId="+result.id);
+		return result;
+	    } finally {
+	    	client.close();
+	    }
 	}
 }

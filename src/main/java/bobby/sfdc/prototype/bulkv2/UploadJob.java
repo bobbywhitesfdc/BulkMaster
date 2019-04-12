@@ -15,8 +15,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import bobby.sfdc.prototype.bulkv2.json.*;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.APIExecutor;
+import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
-public class UploadJob extends AbstractBulkJob {
+public class UploadJob extends AbstractAPIBase {
 	public static final String RESOURCE="/services/data/v45.0/jobs/ingest/{jobId}";
 	public static final String METHOD="PUT";
 	

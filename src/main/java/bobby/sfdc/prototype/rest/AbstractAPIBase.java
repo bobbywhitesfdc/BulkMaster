@@ -1,13 +1,13 @@
-package bobby.sfdc.prototype.bulkv2;
+package bobby.sfdc.prototype.rest;
 
 import bobby.sfdc.prototype.BulkMaster;
 
-public abstract class AbstractBulkJob {
+public abstract class AbstractAPIBase {
 
 	protected final String authToken;
 	protected final String instanceUrl;
 
-	public AbstractBulkJob(String instanceUrl, String authToken) {
+	public AbstractAPIBase(String instanceUrl, String authToken) {
 		this.instanceUrl=instanceUrl;
 		this.authToken=authToken;
 	}

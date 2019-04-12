@@ -12,8 +12,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import bobby.sfdc.prototype.bulkv2.json.GetAllJobsResponse;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.APIExecutor;
+import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
-public class GetAllJobs extends AbstractBulkJob {
+public class GetAllJobs extends AbstractAPIBase {
 	public GetAllJobs(final String instanceUrl, final String authToken) {
 		super(instanceUrl, authToken);
 	}

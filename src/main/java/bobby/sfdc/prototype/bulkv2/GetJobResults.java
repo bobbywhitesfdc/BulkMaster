@@ -15,8 +15,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.APIExecutor;
+import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
-public class GetJobResults extends AbstractBulkJob {
+public class GetJobResults extends AbstractAPIBase {
 	private static final Logger _logger = Logger.getLogger(GetJobResults.class.getName());
 
 	public static final String RESOURCE = "/services/data/v45.0/jobs/ingest/%jobId%";

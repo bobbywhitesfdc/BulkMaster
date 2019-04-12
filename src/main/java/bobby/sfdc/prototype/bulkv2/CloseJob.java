@@ -14,8 +14,9 @@ import bobby.sfdc.prototype.bulkv2.json.CloseJobRequest;
 import bobby.sfdc.prototype.bulkv2.json.JobInfo;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.APIExecutor;
+import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
-public class CloseJob extends AbstractBulkJob {
+public class CloseJob extends AbstractAPIBase {
 	public CloseJob(String instanceUrl, String authToken) {
 		super(instanceUrl, authToken);
 	}

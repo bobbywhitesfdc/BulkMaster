@@ -117,7 +117,7 @@ public class BulkMaster  {
 			break;
 		case DELETE:
 			{
-				CreateJobResponse result = createJobCommand(objectName,"delete","");
+				CreateJobResponse result = createJobCommand(objectName,"hardDelete","");
 				uploadFileOperation(result.contentUrl,inputFileName);
 				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
 			}
@@ -219,7 +219,7 @@ public class BulkMaster  {
 			String valuePart = parts.length > 1 ? parts[1] : "";
 			
 			
-			if (flagPart.compareToIgnoreCase(Flags.JOBID.getLabel())==0) {
+			if (flagPart.compareTo(Flags.JOBID.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Invalid JobID!"+valuePart);
 				} else {
@@ -227,35 +227,39 @@ public class BulkMaster  {
 				}
 			}
 			
-			if (flagPart.compareToIgnoreCase(Flags.LIST.getLabel())==0) {
+			if (flagPart.compareTo(Flags.LIST.getLabel())==0) {
 				this.currentCommand=Commands.LIST;
 			}
 			
-			if (flagPart.compareToIgnoreCase(Flags.STATUS.getLabel())==0) {
+			if (flagPart.compareTo(Flags.STATUS.getLabel())==0) {
 				this.currentCommand=Commands.STATUS;
 			}
-			if (flagPart.compareToIgnoreCase(Flags.CLOSEJOB.getLabel())==0) {
+			if (flagPart.compareTo(Flags.CLOSEJOB.getLabel())==0) {
 				this.currentCommand=Commands.CLOSEJOB;
 			}
-			if (flagPart.compareToIgnoreCase(Flags.ABORTJOB.getLabel())==0) {
+			if (flagPart.compareTo(Flags.ABORTJOB.getLabel())==0) {
 				this.currentCommand=Commands.ABORTJOB;
 			}
 			
-			if (flagPart.compareToIgnoreCase(Flags.INSERT.getLabel())==0) {
+			if (flagPart.compareTo(Flags.INSERT.getLabel())==0) {
 				this.currentCommand=Commands.INSERT;
 			}
-			if (flagPart.compareToIgnoreCase(Flags.RESULTS.getLabel())==0) {
+			if (flagPart.compareTo(Flags.DELETE.getLabel())==0) {
+				this.currentCommand=Commands.DELETE;
+			}
+
+			if (flagPart.compareTo(Flags.RESULTS.getLabel())==0) {
 				this.currentCommand=Commands.RESULTS;
 			}
 			
-			if (flagPart.compareToIgnoreCase(Flags.OBJECTNAME.getLabel())==0) {
+			if (flagPart.compareTo(Flags.OBJECTNAME.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing Objectname!");
 				} else {
 					this.objectName = valuePart;	
 				}				
 			}
-			if (flagPart.compareToIgnoreCase(Flags.EXTERNALID.getLabel())==0) {
+			if (flagPart.compareTo(Flags.EXTERNALID.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing ExternalID fieldname!");
 				} else {
@@ -263,14 +267,14 @@ public class BulkMaster  {
 				}				
 			}
 			
-			if (flagPart.compareToIgnoreCase(Flags.INPUTFILE.getLabel())==0) {
+			if (flagPart.compareTo(Flags.INPUTFILE.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing filename!");
 				} else {
 					this.inputFileName = valuePart;	
 				}				
 			}
-			if (flagPart.compareToIgnoreCase(Flags.OUTPUTDIR.getLabel())==0) {
+			if (flagPart.compareTo(Flags.OUTPUTDIR.getLabel())==0) {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing output directory name!");
 				} else {
