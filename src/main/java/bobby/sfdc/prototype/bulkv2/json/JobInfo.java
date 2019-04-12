@@ -13,7 +13,7 @@ public class JobInfo {
     String jobType;
     String createdById;
     String createdDate;
-	String id;
+	public String id;
 	String lineEnding;
 	String state;
 	String systemModstamp;
@@ -43,6 +43,17 @@ public class JobInfo {
 		builder.append(systemModstamp);
 
 		return builder.toString();
+	}
+
+	/** Convenience Method to determin if the job is in a running State 
+	 * 
+	 * @return true if the Job is running
+	 */
+	public boolean isRunning() {
+		return "UploadComplete".compareTo(state)==0 || "InProcess".compareTo(state)==0;
+	}
+	public boolean isComplete() {
+		return "JobComplete".compareTo(state)==0;
 	}
 
 }

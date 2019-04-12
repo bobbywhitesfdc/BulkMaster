@@ -50,6 +50,7 @@ public class BulkMaster  {
 	private String externalIdFieldName=null;
 	private String inputFileName="";
 	private String outputDir="."; // Default to "here"
+	private int pollingInterval=0;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -106,6 +107,7 @@ public class BulkMaster  {
 				CreateJobResponse result = createJobCommand(objectName,"insert","");
 				uploadFileOperation(result.contentUrl,inputFileName);
 				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+				pollForResults(result.id);				
 			}
 			break;
 		case UPSERT:
@@ -113,6 +115,7 @@ public class BulkMaster  {
 				CreateJobResponse result = createJobCommand(objectName,"upsert",this.externalIdFieldName);
 				uploadFileOperation(result.contentUrl,inputFileName);
 				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+				pollForResults(result.id);
 			}
 			break;
 		case DELETE:
@@ -120,6 +123,7 @@ public class BulkMaster  {
 				CreateJobResponse result = createJobCommand(objectName,"hardDelete","");
 				uploadFileOperation(result.contentUrl,inputFileName);
 				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+				pollForResults(result.id);
 			}
 			break;
 		case RESULTS:
@@ -141,6 +145,43 @@ public class BulkMaster  {
 		}
 
 					
+		
+	}
+
+	/**
+	 * If pollingInterval is greater than zero, poll for this job to complete
+	 * @param jobId
+	 * @throws InterruptedException 
+	 * @throws AuthenticationException 
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 * @throws ClientProtocolException 
+	 */
+	private JobInfo pollForResults(String jobId) throws InterruptedException, ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
+		JobInfo info=null;
+		if (this.pollingInterval > 0) {
+			// Loop until an exception or job completion
+
+			GetJobInfo getter = new GetJobInfo(getInstanceUrl(),getAuthToken());
+
+			do {
+				_logger.info("sleeping " + pollingInterval + " seconds");
+				Thread.sleep(pollingInterval * 1000);
+				info = getter.execute(jobId); 
+				_logger.info(info.toString());
+			} while (info.isRunning());
+			
+			if (info!= null && info.isComplete()) {
+				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.SUCCESS,outputDir));
+				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.FAILED,outputDir));
+				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
+			} else {
+				_logger.info(info == null ? "Unable to get job results " : info.toString());
+			}
+
+			
+		}
+		return info;
 		
 	}
 
@@ -281,6 +322,13 @@ public class BulkMaster  {
 					this.outputDir = valuePart;	
 				}				
 			}
+			if (flagPart.compareTo(Flags.POLL.getLabel())==0) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing polling interval!");
+				} else {
+					this.pollingInterval = Integer.parseInt(valuePart);
+				}				
+			}
 
 			
 		}
@@ -312,17 +360,26 @@ public class BulkMaster  {
 		CLOSEJOB("c","Close Job"),
 		ABORTJOB("a","Abort Job"),
 		RESULTS("r","Get Job results"),
-		JOBID("j","Hex ID of the Job"), 
-		INPUTFILE("f","Input filename"), 
-		OUTPUTDIR("D","Output Directory"),
-		EXTERNALID("x","External ID fieldname for Upsert"),
-		OBJECTNAME("o","Object name for Insert, Update, or Delete");
-		private String label;
-		private String description;
+		JOBID("j","Hex ID of the Job",true), 
+		INPUTFILE("f","Input filename",true), 
+		OUTPUTDIR("D","Output Directory",true),
+		EXTERNALID("x","External ID fieldname for Upsert",true),
+		OBJECTNAME("o","Object name for Insert, Update, or Delete",true),
+		POLL("p","Poll for results - interval in seconds",true);
+		
+		final private String label;
+		final private String description;
+		final private boolean requiresValue;
 
 		Flags(String label, String description) {
 		this.label=label;
 		this.description=description;
+		this.requiresValue=false;
+		}
+		Flags(String label, String description, boolean requiresValue) {
+		this.label=label;
+		this.description=description;
+		this.requiresValue=requiresValue;
 		}
 		public String getLabel() {
 			return label;
@@ -332,6 +389,9 @@ public class BulkMaster  {
 		 */
 		public String getDescription() {
 			return description;
+		}
+		public boolean getRequiresValue() {
+			return requiresValue;
 		}
 	}
 
