@@ -2,17 +2,14 @@ package bobby.sfdc.prototype.bulkv2.json;
 
 import com.google.gson.Gson;
 
-public class CreateJobRequest {
+import bobby.sfdc.prototype.rest.AbstractJSONBody;
+public class CreateJobRequest extends AbstractJSONBody {
     public String columnDelimiter;
     public String contentType;
     public String externalIdFieldName;
     public String lineEnding;
     public String object;
 	public String operation;
-	public String toJson() {
-		String retValue = new Gson().toJson(this);
-		return retValue;
-	}
 }
 
 /**

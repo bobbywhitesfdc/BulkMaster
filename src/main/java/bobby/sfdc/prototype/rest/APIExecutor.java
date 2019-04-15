@@ -1,10 +1,15 @@
 package bobby.sfdc.prototype.rest;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -89,15 +94,26 @@ public class APIExecutor<ResponseClassType> {
 			this.setLastResponseBody(rawJsonResponse);
 
 			
-			if (code==200) {
+			if (code==200 || (code==201 && rawJsonResponse != null)) {
 
 				try {
 					ResponseClassType r =  (ResponseClassType) new Gson().fromJson(rawJsonResponse, apiResponseClassType);
 					return r;
 
 				} catch (JsonSyntaxException | IllegalStateException e) {
-					handleJsonSyntaxException(rawJsonResponse, e);
-					return null;
+					if (isXML(rawJsonResponse)) {
+						// Attempt to convert the XML to JSON and allow reparsing
+						try {
+							return parseFromXML(rawJsonResponse);
+						} catch (JAXBException e1) {
+							_logger.log(Level.SEVERE,"Unable to parse XML: " + e1.toString());
+							return null;
+						}
+							
+					} else {
+						handleJsonSyntaxException(rawJsonResponse, e);
+						return null;
+					}
 				}
 			} else if (code==201) {
 				// File Upload successful
@@ -108,7 +124,11 @@ public class APIExecutor<ResponseClassType> {
 				// The call failed for some reason
 				if (rawJsonResponse != null && rawJsonResponse.startsWith("{")) {
 				    OAuthErrorResponse errorResponse = new Gson().fromJson(rawJsonResponse, OAuthErrorResponse.class);
-				    throw new AuthenticationException(errorResponse);
+				    if (errorResponse.getError() == null) {
+				    	throw new AuthenticationException(rawJsonResponse); // Couldn't parse as a normal OAuth error
+				    } else {
+				    	throw new AuthenticationException(errorResponse);
+				    }
 				} else if (rawJsonResponse != null && rawJsonResponse.startsWith("[{")) {
 				    throw new AuthenticationException(rawJsonResponse);
 				} else {
@@ -118,6 +138,31 @@ public class APIExecutor<ResponseClassType> {
 		} finally {		
 			client.close();
 		}
+	}
+
+	/**
+	 * Attempt to convert a simple flat XML representation as a JSON encoded string
+	 * @param xml
+	 * @return json
+	 * @throws JAXBException 
+	 */
+	@SuppressWarnings("unchecked")
+	private ResponseClassType parseFromXML(String xml) throws JAXBException {
+		JAXBContext jaxbContext = JAXBContext.newInstance(apiResponseClassType);
+		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+		StringReader reader = new StringReader(xml);
+		return (ResponseClassType) unmarshaller.unmarshal(reader);	
+	}
+
+	/** 
+	 * Test to see if the Json Response is really encoded as XML
+	 * 
+	 * @param rawJsonResponse
+	 * @return true if it appears to be XML
+	 */
+	private boolean isXML(String rawJsonResponse) {
+		return rawJsonResponse != null && rawJsonResponse.startsWith("<?xml");
 	}
 
 	public static void setAuthenticationHeader(HttpRequest apiOperation, String authToken) {

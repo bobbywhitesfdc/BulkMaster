@@ -20,6 +20,10 @@ import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import bobby.sfdc.prototype.bulkv1.CreateV1Batch;
+import bobby.sfdc.prototype.bulkv1.CreateV1Job;
+import bobby.sfdc.prototype.bulkv1.json.CreateV1BatchResponse;
+import bobby.sfdc.prototype.bulkv1.json.CreateV1JobResponse;
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
 
@@ -51,6 +55,7 @@ public class BulkMaster  {
 	private String inputFileName="";
 	private String outputDir="."; // Default to "here"
 	private int pollingInterval=0;
+	private String queryString;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -140,6 +145,9 @@ public class BulkMaster  {
 		case ABORTJOB:
 			System.out.println(closeJobCommand(jobId,CloseJobRequest.ABORTED));
 			break;
+		case QUERY:
+			System.out.println(createQueryCommand(objectName,queryString));	
+			break;
 		default:
 			break;
 		}
@@ -198,6 +206,18 @@ public class BulkMaster  {
 		CreateJob creator = new CreateJob(getInstanceUrl(),getAuthToken());
 		return creator.execute(objectName,operation,externalIdFieldName);
 	}
+	
+	private CreateV1BatchResponse createQueryCommand(String objectName, String query) throws Throwable {
+		
+		CreateV1Job creator = new CreateV1Job(getInstanceUrl(),getAuthToken());
+		CreateV1JobResponse result = creator.execute("query",objectName);
+		
+		// Create the Batch with the actual Query in it
+		CreateV1Batch batcher = new CreateV1Batch(getInstanceUrl(),getAuthToken());
+		CreateV1BatchResponse batchResult = batcher.execute(result.id,query);
+		return batchResult;
+	}
+
 
 	/**
 	 * Get the Bulk API Jobs information
@@ -329,6 +349,17 @@ public class BulkMaster  {
 					this.pollingInterval = Integer.parseInt(valuePart);
 				}				
 			}
+			
+			if (flagPart.compareTo(Flags.QUERY.getLabel())==0) {
+				this.currentCommand=Commands.QUERY;
+				
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing query string!");
+				} else {
+					this.queryString = valuePart;
+				}				
+			}
+
 
 			
 		}
@@ -348,7 +379,8 @@ public class BulkMaster  {
 		STATUS,
 		CLOSEJOB,
 		ABORTJOB,
-		RESULTS
+		RESULTS,
+		QUERY
 	}
 	
 	public enum Flags {
@@ -365,7 +397,8 @@ public class BulkMaster  {
 		OUTPUTDIR("D","Output Directory",true),
 		EXTERNALID("x","External ID fieldname for Upsert",true),
 		OBJECTNAME("o","Object name for Insert, Update, or Delete",true),
-		POLL("p","Poll for results - interval in seconds",true);
+		POLL("p","Poll for results - interval in seconds",true),
+		QUERY("q","SOQL Query string",true);
 		
 		final private String label;
 		final private String description;
