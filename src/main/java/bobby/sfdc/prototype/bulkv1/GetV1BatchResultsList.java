@@ -22,7 +22,7 @@ import bobby.sfdc.prototype.rest.AbstractAPIBase;
  *
  */
 public class GetV1BatchResultsList extends AbstractAPIBase {
-	public static final String RESOURCE="/services/async/45.0/job/%jobId/batch/%batchId%/result";
+	public static final String RESOURCE="/services/async/45.0/job/%jobId%/batch/%batchId%/result";
 	private static final Logger _logger = Logger.getLogger(GetV1BatchResultsList.class.getName());
 
 	public GetV1BatchResultsList(String instanceUrl, String authToken) {

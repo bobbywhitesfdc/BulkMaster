@@ -162,7 +162,7 @@ public class APIExecutor<ResponseClassType> {
 	 * @return true if it appears to be XML
 	 */
 	private boolean isXML(String rawJsonResponse) {
-		return rawJsonResponse != null && rawJsonResponse.startsWith("<?xml");
+		return rawJsonResponse != null && rawJsonResponse.startsWith("<");
 	}
 
 	public static void setAuthenticationHeader(HttpRequest apiOperation, String authToken) {

@@ -24,8 +24,11 @@ import bobby.sfdc.prototype.bulkv1.CloseV1Job;
 import bobby.sfdc.prototype.bulkv1.CreateV1Batch;
 import bobby.sfdc.prototype.bulkv1.CreateV1Job;
 import bobby.sfdc.prototype.bulkv1.GetV1BatchInfo;
+import bobby.sfdc.prototype.bulkv1.GetV1BatchResultContent;
+import bobby.sfdc.prototype.bulkv1.GetV1BatchResultsList;
 import bobby.sfdc.prototype.bulkv1.json.BulkV1BatchInfo;
 import bobby.sfdc.prototype.bulkv1.json.BulkV1BatchList;
+import bobby.sfdc.prototype.bulkv1.json.BulkV1BatchResultList;
 import bobby.sfdc.prototype.bulkv1.json.BulkV1JobResponse;
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
@@ -226,13 +229,33 @@ public class BulkMaster  {
 				
 		// Get a list of batches in the Job
 		GetV1BatchInfo batchInfo = new GetV1BatchInfo(getInstanceUrl(),getAuthToken());
-		BulkV1BatchList batches = batchInfo.execute(job.id);
 		
-		// Iterate through the batches and get their individual status
-		for (BulkV1BatchInfo current : batches.batches) {
-			System.out.println("Current batch: " + current);
+		boolean needToWait;
+		do {
+			// Get the current status
+			BulkV1BatchList batches = batchInfo.execute(job.id);
 			
-		}
+			needToWait=false;
+			// Iterate through the batches and get their individual status
+			for (BulkV1BatchInfo current : batches.batches) {
+				_logger.info("Current batch: " + current);
+				if (current.isRunning()) {
+					// Need to come back and revisit this later
+					needToWait = true;
+				} else {
+					// Fetch the results immediately
+					BulkV1BatchResultList resultsList = new GetV1BatchResultsList(getInstanceUrl(),getAuthToken()).execute(job.id, current.id);
+					for (String resultId : resultsList.results) {
+						_logger.info("Fetching resultId: " + resultId + " for batchId: " + current.id + " for job: " + job.id);
+						new GetV1BatchResultContent(getInstanceUrl(),getAuthToken()).execute(job.id, current.id, resultId, outputDir);
+					}
+				}
+			}
+			if (needToWait) {
+				_logger.info("Waiting for " + this.pollingInterval + " seconds");
+				Thread.sleep(this.pollingInterval * 1000);
+			}
+		} while (needToWait);
 				
 		return closeJobResult;
 	}

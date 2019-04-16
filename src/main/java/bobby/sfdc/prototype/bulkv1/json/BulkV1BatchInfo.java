@@ -36,4 +36,21 @@ public class BulkV1BatchInfo extends AbstractJSONBody {
 	public int totalProcessingTime;
 	public int apiActiveProcessingTime;
 	public int apexProcessingTime;
+	/**
+	 * <simpleType name="BatchStateEnum">
+		<restriction base="string">
+		<enumeration value="Queued"/>
+		<enumeration value="InProgress"/>
+		<enumeration value="Completed"/>
+		<enumeration value="Failed"/>
+		<enumeration value="NotProcessed"/>
+		</restriction>
+		</simpleType>
+	 * @return
+	 */
+	public boolean isRunning() {
+		return ( state.compareTo("NotProcessed")==0 
+				|| state.compareTo("InProgress")==0 
+				|| state.compareTo("Queued")==0);
+	}
 }
