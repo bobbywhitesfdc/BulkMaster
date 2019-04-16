@@ -1,25 +1,17 @@
 package bobby.sfdc.prototype.bulkv2;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.logging.Logger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 
 import bobby.sfdc.prototype.oauth.AuthenticationException;
-import bobby.sfdc.prototype.rest.APIExecutor;
 import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
 public class GetJobResults extends AbstractAPIBase {
-	private static final Logger _logger = Logger.getLogger(GetJobResults.class.getName());
-
 	public static final String RESOURCE = "/services/data/v45.0/jobs/ingest/%jobId%";
 	
 	public enum RESULTKIND {
@@ -44,40 +36,12 @@ public class GetJobResults extends AbstractAPIBase {
 		super(instanceUrl, authToken);
 	}
 	public String execute(final String jobId, RESULTKIND kind, String outputDir) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
-	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(RESOURCE,"jobId",jobId) + kind.getURI());
 	    
+	    String fileName = outputDir + File.separator + jobId + kind.getSuffix();
+		HttpGet getter = new HttpGet(builder.build());
 	    
-	    // Simplistic implementation that uses a Synchronous approach and is memory intensive
-		HttpGet getResults = new HttpGet(builder.build());
-	    APIExecutor.setAuthenticationHeader(getResults,getAuthToken());
-	    HttpResponse response = client.execute(getResults);
-	    
-		int code = response.getStatusLine().getStatusCode();
-		
-		_logger.info(response.getStatusLine().toString());
-
-	    
-		HttpEntity entity = response.getEntity();
-		
-		if (code == 200 && entity != null) {
-			/** List the headers
-			for (Header current : response.getAllHeaders()) {
-				String name = current.getName();
-				String value = current.getValue();
-				_logger.info("header:" + name + " : " + value);
-			}
-			**/
-
-		    String fileName = outputDir + File.separator + jobId + kind.getSuffix();
-		    _logger.info("Saving file: " + fileName);
-		    FileOutputStream fos = new FileOutputStream(fileName);
-		    entity.writeTo(fos);
-		    fos.close();
-		    return fileName;
-		}
-		
-		return null;
+	    return downloadFile(getter, fileName);
 		
 	}
 

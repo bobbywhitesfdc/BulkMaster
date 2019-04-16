@@ -23,7 +23,9 @@ import com.google.gson.GsonBuilder;
 import bobby.sfdc.prototype.bulkv1.CloseV1Job;
 import bobby.sfdc.prototype.bulkv1.CreateV1Batch;
 import bobby.sfdc.prototype.bulkv1.CreateV1Job;
-import bobby.sfdc.prototype.bulkv1.json.CreateV1BatchResponse;
+import bobby.sfdc.prototype.bulkv1.GetV1BatchInfo;
+import bobby.sfdc.prototype.bulkv1.json.BulkV1BatchInfo;
+import bobby.sfdc.prototype.bulkv1.json.BulkV1BatchList;
 import bobby.sfdc.prototype.bulkv1.json.BulkV1JobResponse;
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
@@ -147,7 +149,7 @@ public class BulkMaster  {
 			System.out.println(closeJobCommand(jobId,CloseJobRequest.ABORTED));
 			break;
 		case QUERY:
-			System.out.println(createQueryCommand(objectName,queryString));	
+			System.out.println(executeQueryCommand(objectName,queryString));	
 			break;
 		default:
 			break;
@@ -208,18 +210,30 @@ public class BulkMaster  {
 		return creator.execute(objectName,operation,externalIdFieldName);
 	}
 	
-	private BulkV1JobResponse createQueryCommand(String objectName, String query) throws Throwable {
+	private BulkV1JobResponse executeQueryCommand(String objectName, String query) throws Throwable {
 		
 		CreateV1Job creator = new CreateV1Job(getInstanceUrl(),getAuthToken());
-		BulkV1JobResponse result = creator.execute("query",objectName);
+		BulkV1JobResponse job = creator.execute("query",objectName);
 		
 		// Create the Batch with the actual Query in it
 		CreateV1Batch batcher = new CreateV1Batch(getInstanceUrl(),getAuthToken());
-		batcher.execute(result.id,query);
+		batcher.execute(job.id,query);
 		
 		// Close the Job
 		CloseV1Job jobCloser = new CloseV1Job(getInstanceUrl(),getAuthToken());
-		BulkV1JobResponse closeJobResult = jobCloser.execute(result.id);
+		BulkV1JobResponse closeJobResult = jobCloser.execute(job.id);
+
+				
+		// Get a list of batches in the Job
+		GetV1BatchInfo batchInfo = new GetV1BatchInfo(getInstanceUrl(),getAuthToken());
+		BulkV1BatchList batches = batchInfo.execute(job.id);
+		
+		// Iterate through the batches and get their individual status
+		for (BulkV1BatchInfo current : batches.batches) {
+			System.out.println("Current batch: " + current);
+			
+		}
+				
 		return closeJobResult;
 	}
 

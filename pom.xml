@@ -7,6 +7,15 @@
   <artifactId>BulkMaster</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
+  
+  <properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+		<junit.jupiter.version>5.0.3</junit.jupiter.version>
+		<junit.platform.version>1.0.3</junit.platform.version>
+  </properties>
+  
+  
   <dependencies>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -27,6 +36,12 @@
 		<groupId>org.jasypt</groupId>
 		<artifactId>jasypt</artifactId>
 		<version>1.9.2</version>
+	</dependency>
+	<dependency>
+    	<groupId>org.junit.jupiter</groupId>
+    	<artifactId>junit-jupiter-engine</artifactId>
+    	<version>${junit.jupiter.version}</version>
+    	<scope>test</scope>
 	</dependency>
   </dependencies>
     <developers>
@@ -50,6 +65,18 @@
 	          <encoding>UTF-8</encoding>
 	        </configuration> 
 	      </plugin>
+	      <plugin>
+    		<groupId>org.apache.maven.plugins</groupId>
+    		<artifactId>maven-surefire-plugin</artifactId>
+    		<version>3.0.0-M3</version>
+    		<dependencies>
+        		<dependency>
+            		<groupId>org.junit.jupiter</groupId>
+            		<artifactId>junit-jupiter-engine</artifactId>
+            		<version>${junit.jupiter.version}</version>
+        		</dependency>
+    		</dependencies>
+		</plugin>
 	      <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
