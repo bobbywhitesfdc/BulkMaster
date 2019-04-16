@@ -1,7 +1,5 @@
 package bobby.sfdc.prototype.bulkv2.json;
 
-import com.google.gson.Gson;
-
 import bobby.sfdc.prototype.rest.AbstractJSONBody;
 public class CreateJobRequest extends AbstractJSONBody {
     public String columnDelimiter;

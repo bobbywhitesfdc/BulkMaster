@@ -41,7 +41,7 @@ public class CreateV1Batch extends AbstractAPIBase {
 		
 	    	APIExecutor<CreateV1BatchResponse> api = new APIExecutor<CreateV1BatchResponse>(CreateV1BatchResponse.class,getAuthToken());
 	    	CreateV1BatchResponse result = api.processAPIPostResponse(client, post);
-	    	_logger.info("JobId="+result.id);
+	    	_logger.info("BatchId="+result.id);
 	    	return result;
 	    } finally {
 	    	client.close();

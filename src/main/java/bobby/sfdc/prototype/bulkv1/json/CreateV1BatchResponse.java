@@ -1,5 +1,6 @@
 package bobby.sfdc.prototype.bulkv1.json;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import bobby.sfdc.prototype.rest.AbstractJSONBody;
@@ -24,13 +25,13 @@ import bobby.sfdc.prototype.rest.AbstractJSONBody;
 
 @XmlRootElement(name="batchInfo")
 public class CreateV1BatchResponse extends AbstractJSONBody {
-	public int apexProcessingTime;
-	public int apiActiveProcessingTime;
-	public String createdDate;
 	public String id;
 	public String jobId;
+	public String state;
+	public String createdDate;
+	public String systemModstamp;
 	public int numberRecordsFailed;
 	public int numberRecordsProcessed;
-	public String state;
-	public String systemModstamp;
+	public int apiActiveProcessingTime;
+	public int apexProcessingTime;
 }
