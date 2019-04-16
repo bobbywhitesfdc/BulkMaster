@@ -4,6 +4,9 @@ import bobby.sfdc.prototype.BulkMaster;
 
 public abstract class AbstractAPIBase {
 
+	protected static final String BULKV1_SESSION_HEADER = "X-SFDC-Session";
+	public static final String TEXT_CSV = "text/csv; charset=UTF-8";
+	protected static final String APPLICATION_JSON = "application/json";
 	protected final String authToken;
 	protected final String instanceUrl;
 

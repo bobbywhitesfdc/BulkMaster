@@ -1,5 +1,7 @@
 package bobby.sfdc.prototype.bulkv1.json;
 
+import bobby.sfdc.prototype.rest.AbstractJSONBody;
+
 /**
  * Create Bulk API V1 Job Response JSON Body
  * @author bobby.white
@@ -29,14 +31,26 @@ package bobby.sfdc.prototype.bulkv1.json;
 }
  *
  */
-public class CreateV1JobResponse {
-	   public int apexProcessingTime;
-	   public String concurrencyMode;
+public class BulkV1JobResponse  extends AbstractJSONBody{
 	   public String id;
 	   public String object;
 	   public String operation;
 	   public String state;
+	   public int apexProcessingTime;
+	   public int apiActiveProcessingTime;
+	   public String apiVersion;
+	   public String concurrencyMode;
+	   public String contentType;
+	   public int numberBatchesCompleted;
+	   public int numberBatchesFailed;
+	   public int numberBatchesInProgress;
+	   public int numberBatchesQueued;
+	   public int numberBatchesTotal;
+	   public int numberRecordsFailed;
+	   public int numberRecordsProcessed;
+	   public int numberRetries;
 	   public String systemModstamp;
 	   public String createdById;
 	   public String createdDate;
+	   public int totalProcessingTime;
 }

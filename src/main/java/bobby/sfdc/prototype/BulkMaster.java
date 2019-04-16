@@ -20,10 +20,11 @@ import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import bobby.sfdc.prototype.bulkv1.CloseV1Job;
 import bobby.sfdc.prototype.bulkv1.CreateV1Batch;
 import bobby.sfdc.prototype.bulkv1.CreateV1Job;
 import bobby.sfdc.prototype.bulkv1.json.CreateV1BatchResponse;
-import bobby.sfdc.prototype.bulkv1.json.CreateV1JobResponse;
+import bobby.sfdc.prototype.bulkv1.json.BulkV1JobResponse;
 import bobby.sfdc.prototype.bulkv2.*;
 import bobby.sfdc.prototype.bulkv2.json.*;
 
@@ -207,15 +208,19 @@ public class BulkMaster  {
 		return creator.execute(objectName,operation,externalIdFieldName);
 	}
 	
-	private CreateV1BatchResponse createQueryCommand(String objectName, String query) throws Throwable {
+	private BulkV1JobResponse createQueryCommand(String objectName, String query) throws Throwable {
 		
 		CreateV1Job creator = new CreateV1Job(getInstanceUrl(),getAuthToken());
-		CreateV1JobResponse result = creator.execute("query",objectName);
+		BulkV1JobResponse result = creator.execute("query",objectName);
 		
 		// Create the Batch with the actual Query in it
 		CreateV1Batch batcher = new CreateV1Batch(getInstanceUrl(),getAuthToken());
-		CreateV1BatchResponse batchResult = batcher.execute(result.id,query);
-		return batchResult;
+		batcher.execute(result.id,query);
+		
+		// Close the Job
+		CloseV1Job jobCloser = new CloseV1Job(getInstanceUrl(),getAuthToken());
+		BulkV1JobResponse closeJobResult = jobCloser.execute(result.id);
+		return closeJobResult;
 	}
 
 
