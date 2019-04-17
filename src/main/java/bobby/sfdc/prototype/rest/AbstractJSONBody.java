@@ -1,6 +1,6 @@
 package bobby.sfdc.prototype.rest;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class AbstractJSONBody {
 
@@ -9,7 +9,7 @@ public class AbstractJSONBody {
 	}
 
 	public String toJson() {
-		String retValue = new Gson().toJson(this);
+		String retValue = new GsonBuilder().setPrettyPrinting().create().toJson(this);
 		return retValue;
 	}
 	@Override

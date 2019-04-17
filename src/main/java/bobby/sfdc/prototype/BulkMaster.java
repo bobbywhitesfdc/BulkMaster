@@ -6,6 +6,8 @@ package bobby.sfdc.prototype;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,6 +64,7 @@ public class BulkMaster  {
 	private String outputDir="."; // Default to "here"
 	private int pollingInterval=0;
 	private String queryString;
+	private boolean pkChunkingEnabled=false;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -213,29 +216,47 @@ public class BulkMaster  {
 		return creator.execute(objectName,operation,externalIdFieldName);
 	}
 	
+	/**
+	 * Execute a Bulk API V1 Query
+	 * @param objectName
+	 * @param query
+	 * @return
+	 * @throws Throwable
+	 */
 	private BulkV1JobResponse executeQueryCommand(String objectName, String query) throws Throwable {
 		
 		CreateV1Job creator = new CreateV1Job(getInstanceUrl(),getAuthToken());
-		BulkV1JobResponse job = creator.execute("query",objectName);
+		BulkV1JobResponse job = creator.execute("query",objectName,this.pkChunkingEnabled);
 		
 		// Create the Batch with the actual Query in it
 		CreateV1Batch batcher = new CreateV1Batch(getInstanceUrl(),getAuthToken());
 		batcher.execute(job.id,query);
-		
-		// Close the Job
-		CloseV1Job jobCloser = new CloseV1Job(getInstanceUrl(),getAuthToken());
-		BulkV1JobResponse closeJobResult = jobCloser.execute(job.id);
-
 				
 		// Get a list of batches in the Job
 		GetV1BatchInfo batchInfo = new GetV1BatchInfo(getInstanceUrl(),getAuthToken());
 		
+		// Download all of the results
+		downloadV1BatchResults(job, batchInfo);
+		
+		// Close the Job
+		CloseV1Job jobCloser = new CloseV1Job(getInstanceUrl(),getAuthToken());
+		BulkV1JobResponse closeJobResult = jobCloser.execute(job.id);
+				
+		return closeJobResult;
+	}
+
+	protected void downloadV1BatchResults(BulkV1JobResponse job, GetV1BatchInfo batchInfo) throws URISyntaxException,
+			ClientProtocolException, IOException, AuthenticationException, InterruptedException {
 		boolean needToWait;
+		Map<String,String> resultsAlreadyProcessed = new HashMap<String,String>();
+		
 		do {
+			// Reset this flag that will keep us looping
+			needToWait=false;
+			
 			// Get the current status
 			BulkV1BatchList batches = batchInfo.execute(job.id);
-			
-			needToWait=false;
+
 			// Iterate through the batches and get their individual status
 			for (BulkV1BatchInfo current : batches.batches) {
 				_logger.info("Current batch: " + current);
@@ -246,8 +267,12 @@ public class BulkMaster  {
 					// Fetch the results immediately
 					BulkV1BatchResultList resultsList = new GetV1BatchResultsList(getInstanceUrl(),getAuthToken()).execute(job.id, current.id);
 					for (String resultId : resultsList.results) {
-						_logger.info("Fetching resultId: " + resultId + " for batchId: " + current.id + " for job: " + job.id);
-						new GetV1BatchResultContent(getInstanceUrl(),getAuthToken()).execute(job.id, current.id, resultId, outputDir);
+						if (!resultsAlreadyProcessed.containsKey(resultId)) {
+							_logger.info("Fetching resultId: " + resultId + " for batchId: " + current.id + " for job: " + job.id);
+							new GetV1BatchResultContent(getInstanceUrl(),getAuthToken()).execute(job.id, current.id, resultId, outputDir);
+							// Avoid downloading a batch result that we've already processed!
+							resultsAlreadyProcessed.put(resultId,resultId);
+						}
 					}
 				}
 			}
@@ -256,8 +281,6 @@ public class BulkMaster  {
 				Thread.sleep(this.pollingInterval * 1000);
 			}
 		} while (needToWait);
-				
-		return closeJobResult;
 	}
 
 
@@ -401,9 +424,9 @@ public class BulkMaster  {
 					this.queryString = valuePart;
 				}				
 			}
-
-
-			
+			if (flagPart.compareTo(Flags.PKCHUNKING.getLabel())==0) {
+				this.pkChunkingEnabled = true;			
+			}			
 		}
 		return;
 	}
@@ -440,7 +463,8 @@ public class BulkMaster  {
 		EXTERNALID("x","External ID fieldname for Upsert",true),
 		OBJECTNAME("o","Object name for Insert, Update, or Delete",true),
 		POLL("p","Poll for results - interval in seconds",true),
-		QUERY("q","SOQL Query string",true);
+		QUERY("q","SOQL Query string",true),
+		PKCHUNKING("pk","Enable PK Chunking for Large Queries");
 		
 		final private String label;
 		final private String description;

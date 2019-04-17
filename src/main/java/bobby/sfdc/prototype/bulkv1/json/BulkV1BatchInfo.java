@@ -49,8 +49,6 @@ public class BulkV1BatchInfo extends AbstractJSONBody {
 	 * @return
 	 */
 	public boolean isRunning() {
-		return ( state.compareTo("NotProcessed")==0 
-				|| state.compareTo("InProgress")==0 
-				|| state.compareTo("Queued")==0);
+		return ( state.compareTo("InProgress")==0 || state.compareTo("Queued")==0);
 	}
 }

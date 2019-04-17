@@ -26,7 +26,7 @@ public class CreateV1Job extends AbstractAPIBase {
 	public CreateV1Job(final String instanceUrl, final String authToken) {
 		super(instanceUrl, authToken);
 	}
-	public BulkV1JobResponse execute(final String operation, final String objectName) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
+	public BulkV1JobResponse execute(final String operation, final String objectName, boolean pkChunkingEnabled) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 		
 
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -41,7 +41,10 @@ public class CreateV1Job extends AbstractAPIBase {
 	    	
 	    	
 			post.setEntity(new StringEntity(request.toJson()));
-	    	post.setHeader("X-SFDC-Session",getAuthToken()); // V1 Jobs Expect this header
+	    	post.setHeader("X-SFDC-Session",getAuthToken());
+	    	if (pkChunkingEnabled) {
+	    		post.setHeader("Sforce-Enable-PKChunking","true");
+	    	}
 	    	post.setHeader(HttpHeaders.ACCEPT,"application/json");
 	    	post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");
 
