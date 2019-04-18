@@ -141,9 +141,7 @@ public class BulkMaster  {
 			}
 			break;
 		case RESULTS:
-			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.SUCCESS,outputDir));
-			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.FAILED,outputDir));
-			System.out.println(getResultsCommand(jobId, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
+			pollForResults(this.jobId);
 			break;
 		case STATUS:
 			System.out.println(getStatusCommand(jobId));
@@ -186,6 +184,7 @@ public class BulkMaster  {
 				Thread.sleep(pollingInterval * 1000);
 				info = getter.execute(jobId); 
 				_logger.info(info.toString());
+				_logger.info("Is Running?: " + info.isRunning());
 			} while (info.isRunning());
 			
 			if (info!= null && info.isComplete()) {

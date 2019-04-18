@@ -1,11 +1,14 @@
 package bobby.sfdc.prototype.bulkv2.json;
+
+import bobby.sfdc.prototype.rest.AbstractJSONBody;
+
 /**
 
 JobInfo - response from GetAllJobs
 
 **/
 
-public class JobInfo {
+public class JobInfo extends AbstractJSONBody {
     String apiVersion;
     String concurrencyMode;
     String contentType;
@@ -24,33 +27,12 @@ public class JobInfo {
 	int numberRecordsProcessed;
 	long totalProcessingTime;
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("id=");
-		builder.append(id);
-		builder.append(" jobType=");
-		builder.append(jobType);
-		builder.append(" state=");
-		builder.append(state);
-		builder.append(" concurrencyMode=");
-		builder.append(concurrencyMode);
-		builder.append(" contentUrl=");
-		builder.append(contentUrl);
-		builder.append(" lineEnding=");
-		builder.append(lineEnding);
-		builder.append(" systemModstamp=");
-		builder.append(systemModstamp);
-
-		return builder.toString();
-	}
-
-	/** Convenience Method to determin if the job is in a running State 
+	/** Convenience Method to determine if the job is in a running State 
 	 * 
 	 * @return true if the Job is running
 	 */
 	public boolean isRunning() {
-		return "UploadComplete".compareTo(state)==0 || "InProcess".compareTo(state)==0;
+		return "UploadComplete".compareTo(state)==0 || "InProgress".compareTo(state)==0;
 	}
 	public boolean isComplete() {
 		return "JobComplete".compareTo(state)==0;
