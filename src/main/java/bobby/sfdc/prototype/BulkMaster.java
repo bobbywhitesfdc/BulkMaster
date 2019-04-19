@@ -83,12 +83,13 @@ public class BulkMaster  {
 			String loginUrl = args.length >=3 ? args[2] : DEFAULT_LOGIN_URL;
 			if (!loginUrl.startsWith("https:")) {
 				loginUrl = DEFAULT_LOGIN_URL;
-			}	
+			}
 			
-			mgr.setOptionsFromCommandlineFlags(args);
-			
-						
+			// Order is important here because of overrides
 			mgr.initConnectedAppFromConfigFile("/connectedapp.properties");
+			mgr.setOptionsFromCommandlineFlags(args);		
+			mgr.setLoginUrl(loginUrl);
+
 			
 		
 			mgr.getAuthToken(userId, password);
