@@ -18,6 +18,7 @@ import org.apache.http.client.ClientProtocolException;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
 import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
+import bobby.sfdc.prototype.util.CommandlineHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -71,32 +72,21 @@ public class BulkMaster  {
 
 	public static void main(String[] args) {
 		BulkMaster mgr = new BulkMaster();
-		try {
-			
-			if (args.length < 2) {
-				printSyntaxStatement();			
-				return;
-			}
-			
+		try {			
 			String userId = args[0];
 			String password = args[1];
 			
 			String loginUrl = args.length >=3 ? args[2] : DEFAULT_LOGIN_URL;
 			if (!loginUrl.startsWith("https:")) {
 				loginUrl = DEFAULT_LOGIN_URL;
-			}
-			
-			String ccEmail = args.length >=4 ? args[3] : null;
-			if (ccEmail != null && (!ccEmail.contains("@") || ccEmail.startsWith("-"))) {
-				ccEmail = null;
-			}
+			}	
 			
 			mgr.setOptionsFromCommandlineFlags(args);
 			
 						
 			mgr.initConnectedAppFromConfigFile("/connectedapp.properties");
 			
-			mgr.setLoginUrl(loginUrl);		
+		
 			mgr.getAuthToken(userId, password);
 
 			System.out.println("Instance URL:" + mgr.getInstanceUrl());
@@ -107,6 +97,83 @@ public class BulkMaster  {
 			_logger.log(Level.SEVERE,t.getMessage());
 		}
 		
+	}
+
+	private void setOptionsFromCommandlineFlags(String[] args) {
+		CommandlineHelper helper = new CommandlineHelper(this);
+		helper.setOptionsFromCommandlineFlags(args);
+	}
+
+	public Commands getCurrentCommand() {
+		return currentCommand;
+	}
+
+	public void setCurrentCommand(Commands currentCommand) {
+		this.currentCommand = currentCommand;
+	}
+
+	public String getJobId() {
+		return jobId;
+	}
+
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
+	}
+
+	public String getObjectName() {
+		return objectName;
+	}
+
+	public void setObjectName(String objectName) {
+		this.objectName = objectName;
+	}
+
+	public String getExternalIdFieldName() {
+		return externalIdFieldName;
+	}
+
+	public void setExternalIdFieldName(String externalIdFieldName) {
+		this.externalIdFieldName = externalIdFieldName;
+	}
+
+	public String getInputFileName() {
+		return inputFileName;
+	}
+
+	public void setInputFileName(String inputFileName) {
+		this.inputFileName = inputFileName;
+	}
+
+	public String getOutputDir() {
+		return outputDir;
+	}
+
+	public void setOutputDir(String outputDir) {
+		this.outputDir = outputDir;
+	}
+
+	public int getPollingInterval() {
+		return pollingInterval;
+	}
+
+	public void setPollingInterval(int pollingInterval) {
+		this.pollingInterval = pollingInterval;
+	}
+
+	public String getQueryString() {
+		return queryString;
+	}
+
+	public void setQueryString(String queryString) {
+		this.queryString = queryString;
+	}
+
+	public boolean isPkChunkingEnabled() {
+		return pkChunkingEnabled;
+	}
+
+	public void setPkChunkingEnabled(boolean pkChunkingEnabled) {
+		this.pkChunkingEnabled = pkChunkingEnabled;
 	}
 
 	private void executeCommand() throws Throwable {
@@ -314,123 +381,6 @@ public class BulkMaster  {
 
 
 	/**
-	 * 
-	 */
-	public static void printSyntaxStatement() {
-		System.out.println("userid and password are required parameters!:\n  myuser@example.com mypassword");
-		System.out.println("Syntax:  BulkMaster <username> <password> [loginURL] [ccEmailAddress] [FLAGS]");
-		System.out.println("\nIf omitted, default Login URL=" + DEFAULT_LOGIN_URL);
-		
-		System.out.println("\n\nFlags:");
-		
-		for (Flags flag : Flags.values()) {
-			System.out.println("-"+ flag.getLabel() + " " + flag.getDescription());
-		}
-	}
-	
-	/**
-	 * Process the Commandline Flags to set parameters for the News Feed
-	 * @param args
-	 */
-	public void setOptionsFromCommandlineFlags(String[] args) {
-	
-		for (String flag : args) {
-			if (!flag.startsWith("-")) {
-				// it's not a flag, skip it
-				continue;
-			} 
-			String parts[] = flag.substring(1).split(":");
-			String flagPart = parts.length >= 1 ? parts[0] : "";
-			String valuePart = parts.length > 1 ? parts[1] : "";
-			
-			
-			if (flagPart.compareTo(Flags.JOBID.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Invalid JobID!"+valuePart);
-				} else {
-					this.jobId = valuePart;	
-				}
-			}
-			
-			if (flagPart.compareTo(Flags.LIST.getLabel())==0) {
-				this.currentCommand=Commands.LIST;
-			}
-			
-			if (flagPart.compareTo(Flags.STATUS.getLabel())==0) {
-				this.currentCommand=Commands.STATUS;
-			}
-			if (flagPart.compareTo(Flags.CLOSEJOB.getLabel())==0) {
-				this.currentCommand=Commands.CLOSEJOB;
-			}
-			if (flagPart.compareTo(Flags.ABORTJOB.getLabel())==0) {
-				this.currentCommand=Commands.ABORTJOB;
-			}
-			
-			if (flagPart.compareTo(Flags.INSERT.getLabel())==0) {
-				this.currentCommand=Commands.INSERT;
-			}
-			if (flagPart.compareTo(Flags.DELETE.getLabel())==0) {
-				this.currentCommand=Commands.DELETE;
-			}
-
-			if (flagPart.compareTo(Flags.RESULTS.getLabel())==0) {
-				this.currentCommand=Commands.RESULTS;
-			}
-			
-			if (flagPart.compareTo(Flags.OBJECTNAME.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing Objectname!");
-				} else {
-					this.objectName = valuePart;	
-				}				
-			}
-			if (flagPart.compareTo(Flags.EXTERNALID.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing ExternalID fieldname!");
-				} else {
-					this.externalIdFieldName = valuePart;	
-				}				
-			}
-			
-			if (flagPart.compareTo(Flags.INPUTFILE.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing filename!");
-				} else {
-					this.inputFileName = valuePart;	
-				}				
-			}
-			if (flagPart.compareTo(Flags.OUTPUTDIR.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing output directory name!");
-				} else {
-					this.outputDir = valuePart;	
-				}				
-			}
-			if (flagPart.compareTo(Flags.POLL.getLabel())==0) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing polling interval!");
-				} else {
-					this.pollingInterval = Integer.parseInt(valuePart);
-				}				
-			}
-			
-			if (flagPart.compareTo(Flags.QUERY.getLabel())==0) {
-				this.currentCommand=Commands.QUERY;
-				
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Missing query string!");
-				} else {
-					this.queryString = valuePart;
-				}				
-			}
-			if (flagPart.compareTo(Flags.PKCHUNKING.getLabel())==0) {
-				this.pkChunkingEnabled = true;			
-			}			
-		}
-		return;
-	}
-
-	/**
 	 * Define the Commands this processor implements
 	 * @author bobby.white
 	 *
@@ -490,6 +440,25 @@ public class BulkMaster  {
 		}
 		public boolean getRequiresValue() {
 			return requiresValue;
+		}
+		/**
+		 * Check to set if this flag is set
+		 * @param arg
+		 * @return
+		 */
+		public boolean isFlagSet(String arg) {
+			return ("-" + getLabel()).compareTo(arg)==0;
+		}
+		/**
+		 * Test to see if this argument is a valid flag
+		 * @param arg
+		 * @return true if it matches any defined flag
+		 */
+		public static boolean isValidFlag(String arg) {
+			for (Flags current : values()) {
+				if (current.isFlagSet(arg)) return true;
+			}
+			return false;
 		}
 	}
 
