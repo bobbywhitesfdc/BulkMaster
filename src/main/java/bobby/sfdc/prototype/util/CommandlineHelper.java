@@ -189,7 +189,7 @@ public class CommandlineHelper {
 	 */
 	public static void printSyntaxStatement() {
 		System.out.println("userid and password are required parameters!:\n  myuser@example.com mypassword");
-		System.out.println("Syntax:  BulkMaster <username> <password> [loginURL] [ccEmailAddress] [FLAGS]");
+		System.out.println("Syntax:  BulkMaster <username> <password> [loginURL] [FLAGS]");
 		System.out.println("\nIf omitted, default Login URL=" + BulkMaster.DEFAULT_LOGIN_URL);
 		
 		System.out.println("\n\nFlags:");

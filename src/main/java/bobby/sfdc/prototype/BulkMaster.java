@@ -72,7 +72,11 @@ public class BulkMaster  {
 
 	public static void main(String[] args) {
 		BulkMaster mgr = new BulkMaster();
-		try {			
+		try {
+			if (args.length < 2) {
+				CommandlineHelper.printSyntaxStatement();
+				throw new IllegalArgumentException("Missing required command line arguments");
+			}
 			String userId = args[0];
 			String password = args[1];
 			
