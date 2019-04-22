@@ -48,6 +48,7 @@ public class BulkMaster  {
 	private static final String CONSUMER_KEY_PROP = "consumer.key";
 	private static final String CONSUMER_SECRET_PROP = "consumer.secret";
 	private static final String LOGIN_URL_PROP = "login.url";
+	private static final int MIN_POLLING_INTERVAL = 5;
 
 	private Gson _gson;
 	private String _authToken=null;
@@ -100,6 +101,11 @@ public class BulkMaster  {
 			
 		} catch (Throwable t) {
 			_logger.log(Level.SEVERE,t.getMessage());
+			if (t instanceof AuthenticationException) {
+				System.exit(1);
+			} else {
+				System.exit(2);
+			}
 		}
 		
 	}
@@ -252,8 +258,9 @@ public class BulkMaster  {
 			GetJobInfo getter = new GetJobInfo(getInstanceUrl(),getAuthToken());
 
 			do {
-				_logger.info("sleeping " + pollingInterval + " seconds");
-				Thread.sleep(pollingInterval * 1000);
+				int waitSec = Math.max(pollingInterval,MIN_POLLING_INTERVAL);
+				_logger.info("sleeping " + waitSec + " seconds");
+				Thread.sleep(waitSec * 1000);
 				info = getter.execute(jobId); 
 				_logger.info(info.toString());
 				_logger.info("Is Running?: " + info.isRunning());
@@ -348,8 +355,9 @@ public class BulkMaster  {
 				}
 			}
 			if (needToWait) {
-				_logger.info("Waiting for " + this.pollingInterval + " seconds");
-				Thread.sleep(this.pollingInterval * 1000);
+				int waitSec=Math.max(this.pollingInterval,MIN_POLLING_INTERVAL);
+				_logger.info("Waiting for " + waitSec + " seconds");
+				Thread.sleep(waitSec * 1000);
 			}
 		} while (needToWait);
 	}
@@ -500,12 +508,17 @@ public class BulkMaster  {
 	 * Set the Internal Members from the OAuthTokenSuccessResponse
 	 * 
 	 * @param auth  initialized by an OAuth based flow
+	 * @throws AuthenticationException 
 	 */
-	public void setAuthToken(OAuthTokenSuccessResponse auth) {
-		this.setIsInitialized(true);
-		this._authToken = auth.getAccess_token();
-		this._id = auth.getId();
-		this._instanceUrl = auth.getInstance_url();
+	public void setAuthToken(OAuthTokenSuccessResponse auth) throws AuthenticationException {
+		if (auth==null) {
+			throw new AuthenticationException("Authentication failed");
+		} else {
+			this.setIsInitialized(true);
+			this._authToken = auth.getAccess_token();
+			this._id = auth.getId();
+			this._instanceUrl = auth.getInstance_url();
+		}
 	}
 
 	/**

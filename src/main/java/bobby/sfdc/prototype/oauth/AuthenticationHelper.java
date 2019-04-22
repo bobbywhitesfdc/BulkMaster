@@ -81,8 +81,9 @@ public class AuthenticationHelper {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} catch (AuthenticationException e) {
-			// do nothing, let it past
+			// Rethrow the Authentication Failure after logging it
 			_logger.info(e.getMessage());
+			throw e;
 		} finally {
 			if (client != null) {
 				client.close();
