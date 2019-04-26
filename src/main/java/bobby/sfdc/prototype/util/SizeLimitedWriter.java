@@ -8,8 +8,10 @@ public class SizeLimitedWriter extends BufferedWriter {
 	public static final String SIZE_LIMIT_WOULD_BE_EXCEEDED = "Size Limit would be exceeded";
 	public static final long MEGABYTE = 1024*1024;
 	long bytesWritten=0;
+	long recordsWritten=0;
 	long lastMBAnnounced=0;
 	final long maxBytes;
+	private long maxRecords;
 	public static final String NEWLINE_SEPARATOR = System.getProperty("line.separator");
 	public static final int NEWLINE_SEPARATOR_LEN = NEWLINE_SEPARATOR.length();
 
@@ -26,6 +28,9 @@ public class SizeLimitedWriter extends BufferedWriter {
 	public SizeLimitedWriter(final Writer out, final long maxBytes) {
 		super(out);
 		this.maxBytes=maxBytes;
+	}
+	public void setRecordLimit(long maxRecords) {
+		this.maxRecords=maxRecords;
 	}
 	
 	/**
@@ -44,7 +49,7 @@ public class SizeLimitedWriter extends BufferedWriter {
 			throw new IllegalArgumentException("Null line");
 		} else {
 			long targetLength = bytesWritten + line.length();
-			if ((targetLength) > maxBytes) {
+			if ((targetLength) > maxBytes || (maxRecords > 0 && recordsWritten >= maxRecords) ) {
 				throw new SizeLimitExceeded(SIZE_LIMIT_WOULD_BE_EXCEEDED);
 			}
 		}
@@ -65,6 +70,7 @@ public class SizeLimitedWriter extends BufferedWriter {
 	@Override
 	public void newLine() throws IOException {
 		bytesWritten += NEWLINE_SEPARATOR_LEN;
+		++recordsWritten;
 		super.newLine();
 	}
 

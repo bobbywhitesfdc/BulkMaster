@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * Utility class to split a CSV file into smaller chunks if required by the Bulk API limit
@@ -12,8 +13,12 @@ import java.io.IOException;
  *
  */
 public class CSVSplitManager {
+	private static  Logger _logger = Logger.getLogger(CSVSplitManager.class.getName());
+
 	public static final int DEFAULT_SIZE_LIMIT_MB = 100;
+	public static final long DEFAULT_RECORD_LIMIT = 10000 * 21 * 2;
 	private int sizeLimit=DEFAULT_SIZE_LIMIT_MB;
+	private long maxRecords = DEFAULT_RECORD_LIMIT;
 	
 	private int partId;
 	private File original;
@@ -22,7 +27,6 @@ public class CSVSplitManager {
 	public static void main(String[] args) {
 		try {
 			CSVSplitManager mgr = new CSVSplitManager();
-			System.out.println(mgr.needsSplitting(args[0]));
 			mgr.splitFile(new File(args[0]),new File(args[1]));
 			
 		} catch (IOException ex) {
@@ -33,17 +37,6 @@ public class CSVSplitManager {
 
 	public CSVSplitManager() {
 	}
-	
-	/**
-	 * Determine if the file needs to be split
-	 * @param inputFileName
-	 * @return true if it exceeds the size limit
-	 */
-	public boolean needsSplitting(String inputFileName) {
-		File inputFile = new File(inputFileName);
-		return inputFile.exists() && (inputFile.length() > getSizeLimitBytes());
-	}
-	
 
 	/**
 	 * Split the original file creating 1 or more files that contain the original records
@@ -109,6 +102,8 @@ public class CSVSplitManager {
 
 	private SizeLimitedWriter getWriter(File original, final String header) throws IOException {
 		SizeLimitedWriter writer = new SizeLimitedWriter(new FileWriter(getPartFile()),getSizeLimitBytes());
+		
+		writer.setRecordLimit(maxRecords);
 
 		writer.writeLine(header);
 		
@@ -117,6 +112,7 @@ public class CSVSplitManager {
 	
 	private File getPartFile() {
 		String outputFileName = this.outputDir.getPath() + File.separator + original.getName()+"." + partId++;
+		_logger.info("Writing to part file:" + outputFileName);
 		return new File(outputFileName);
 	}
 
