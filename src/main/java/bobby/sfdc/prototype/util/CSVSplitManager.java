@@ -13,10 +13,8 @@ import java.io.IOException;
  */
 public class CSVSplitManager {
 	public static final int DEFAULT_SIZE_LIMIT_MB = 100;
-	public static final String DEFAULT_LINE_DELIMITER = "\r";
 	private int sizeLimit=DEFAULT_SIZE_LIMIT_MB;
 	
-	private final String lineDelimiter;
 	private int partId;
 	private File original;
 	private File outputDir;
@@ -34,7 +32,6 @@ public class CSVSplitManager {
 	}
 
 	public CSVSplitManager() {
-		this.lineDelimiter=DEFAULT_LINE_DELIMITER;
 	}
 	
 	/**
@@ -143,12 +140,4 @@ public class CSVSplitManager {
 	public void setSizeLimit(int sizeLimit) {
 		this.sizeLimit = sizeLimit;
 	}
-
-	/**
-	 * @return the lineDelimiter
-	 */
-	public String getLineDelimiter() {
-		return lineDelimiter;
-	}
-
 }
