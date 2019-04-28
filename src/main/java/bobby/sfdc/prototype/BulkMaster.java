@@ -3,10 +3,14 @@
  */
 package bobby.sfdc.prototype;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -196,30 +200,21 @@ public class BulkMaster  {
 			break;
 		case INSERT:
 			{
-				CreateJobResponse result = createJobCommand(objectName,"insert","");
-				uploadFileOperation(result.contentUrl,inputFileName);
-				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
-				pollForResults(result.id);				
+				processDMLCommand(inputFileName,objectName,"insert","");				
 			}
 			break;
 		case UPSERT:
 			{
-				CreateJobResponse result = createJobCommand(objectName,"upsert",this.externalIdFieldName);
-				uploadFileOperation(result.contentUrl,inputFileName);
-				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
-				pollForResults(result.id);
+				processDMLCommand(inputFileName,objectName,"upsert",this.externalIdFieldName);				
 			}
 			break;
 		case DELETE:
 			{
-				CreateJobResponse result = createJobCommand(objectName,"hardDelete","");
-				uploadFileOperation(result.contentUrl,inputFileName);
-				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
-				pollForResults(result.id);
+				processDMLCommand(inputFileName,objectName,"hardDelete","");
 			}
 			break;
 		case RESULTS:
-			pollForResults(this.jobId);
+			pollForResults(this.jobId,this.pollingInterval);
 			break;
 		case STATUS:
 			System.out.println(getStatusCommand(jobId));
@@ -242,6 +237,68 @@ public class BulkMaster  {
 	}
 
 	/**
+	 * Process a DML command for a file OR a directory
+	 * @param originalFileName
+	 * @param objectName
+	 * @param operation
+	 * @param externalIdFieldName
+	 * @throws Throwable
+	 * @throws URISyntaxException
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws AuthenticationException
+	 * @throws InterruptedException
+	 */
+	private void processDMLCommand(String originalFileName, String objectName, String operation, String externalIdFieldName) throws Throwable, URISyntaxException, ClientProtocolException, IOException,
+			AuthenticationException, InterruptedException {
+		
+		File input = new File(originalFileName);
+		List<File> toProcess;
+		
+		// Expand the directory and process the contents
+		if (input.isDirectory()) {
+			toProcess = new ArrayList<File>(Arrays.asList(input.listFiles()));
+			
+		} else {
+			toProcess = new ArrayList<File>();
+			toProcess.add(input);
+		}
+		
+		// Upload all of the files immediately, if we hit an error in any one, it will exit.  Save the Job
+		Map<String,JobInfo> jobs = new HashMap<String,JobInfo>();
+
+		for (File current : toProcess) {
+			CreateJobResponse result = createJobCommand(objectName,operation,externalIdFieldName);
+			uploadFileOperation(result.contentUrl,current.getName());
+			closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+			jobs.put(result.id,null);
+		}
+		
+		boolean anyRemaining;
+		do {
+			// Any left to process? Reset at the beginning of each iteration
+			anyRemaining=false;
+			for (String current : jobs.keySet()) {
+
+				// Skip ones that were previously completed and we've already downloaded them
+				if ((jobs.containsKey(current) && jobs.get(current) != null && jobs.get(current).isComplete())) {
+					
+				} else {
+					// Check for results for this current job, if complete, download the results
+					JobInfo info = pollForResults(current, 0);
+					jobs.put(current,info);
+					// update the status so we'll continue to iterate if any jobs are still running
+					anyRemaining = (anyRemaining || info.isRunning());
+				}
+
+			}	
+		} while (anyRemaining);
+		
+		
+
+	}
+
+	/**
 	 * If pollingInterval is greater than zero, poll for this job to complete
 	 * @param jobId
 	 * @throws InterruptedException 
@@ -250,15 +307,15 @@ public class BulkMaster  {
 	 * @throws URISyntaxException 
 	 * @throws ClientProtocolException 
 	 */
-	private JobInfo pollForResults(String jobId) throws InterruptedException, ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
+	private JobInfo pollForResults(String jobId, int interval) throws InterruptedException, ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
 		JobInfo info=null;
-		if (this.pollingInterval > 0) {
+		if (interval > 0) {
 			// Loop until an exception or job completion
 
 			GetJobInfo getter = new GetJobInfo(getInstanceUrl(),getAuthToken());
 
 			do {
-				int waitSec = Math.max(pollingInterval,MIN_POLLING_INTERVAL);
+				int waitSec = Math.max(interval,MIN_POLLING_INTERVAL);
 				_logger.info("sleeping " + waitSec + " seconds");
 				Thread.sleep(waitSec * 1000);
 				info = getter.execute(jobId); 

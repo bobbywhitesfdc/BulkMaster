@@ -21,6 +21,22 @@ public class CSVSplitManager {
 	private long maxRecords = DEFAULT_RECORD_LIMIT;
 	
 	private int partId;
+	public File getOriginal() {
+		return original;
+	}
+
+	public void setOriginal(File original) {
+		this.original = original;
+	}
+
+	public File getOutputDir() {
+		return outputDir;
+	}
+
+	public void setOutputDir(File outputDir) {
+		this.outputDir = outputDir;
+	}
+
 	private File original;
 	private File outputDir;
 	
@@ -110,10 +126,32 @@ public class CSVSplitManager {
 		return writer;
 	}
 	
-	private File getPartFile() {
-		String outputFileName = this.outputDir.getPath() + File.separator + original.getName()+"." + partId++;
+	public File getPartFile() {
+		String partNo = String.format("%04d", partId++);
+		String extension = getExtension(original.getName());
+		String baseName = getBase(original.getName());
+		String outputFileName = this.outputDir.getPath() + File.separator + baseName + "." + partNo + extension ;
 		_logger.info("Writing to part file:" + outputFileName);
 		return new File(outputFileName);
+	}
+	
+	public String getBase(String path) {
+		int dot = path.lastIndexOf(".");
+		return  (dot == -1) ? path : path.substring(0,dot);
+	}
+
+	/**
+	 * Return the extension of a filename ex: data.csv --> .csv
+	 * @param path
+	 * @return the extension including the final dot
+	 */
+	public String getExtension(String path) {
+		if (path.contains(".")) {
+			int dot = path.lastIndexOf(".");
+			return path.substring(dot,path.length());
+		} else {
+			return "";
+		}
 	}
 
 	/*
