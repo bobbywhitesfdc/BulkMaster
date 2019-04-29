@@ -113,7 +113,7 @@ public class CommandlineHelper {
 				if (valuePart.isEmpty()) {
 					throw new IllegalArgumentException("Missing filename!");
 				} else {
-					validateFile(valuePart);
+					validateFileOrDir(valuePart);
 					master.setInputFileName(valuePart);
 				}				
 			}
@@ -167,6 +167,20 @@ public class CommandlineHelper {
 			throw new IllegalArgumentException("File is not readable: " + inputFileName);
 		}
 	}
+	
+	/**
+	 * Validate that an input file exists, is a file, and is readable
+	 * @param inputFileName
+	 * @throws IllegalArgumentException
+	 */
+	public void validateFileOrDir(String inputFileName) throws IllegalArgumentException {
+		File fileToValidate = new File(inputFileName);
+		if (!fileToValidate.exists()) {
+			throw new IllegalArgumentException("File does not exist: " + inputFileName);
+		} else if (!fileToValidate.canRead()) {
+			throw new IllegalArgumentException("File is not readable: " + inputFileName);
+		}
+	}
 
 	/**
 	 * Validates that the output Directory exists, is a directory, and is writable
@@ -183,6 +197,8 @@ public class CommandlineHelper {
 			throw new IllegalArgumentException("Directory is not writable: " + outputDir);
 		}	
 	}
+	
+	
 
 	/**
 	 * 

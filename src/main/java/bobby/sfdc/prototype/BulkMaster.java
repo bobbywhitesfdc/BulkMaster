@@ -268,10 +268,12 @@ public class BulkMaster  {
 		Map<String,JobInfo> jobs = new HashMap<String,JobInfo>();
 
 		for (File current : toProcess) {
-			CreateJobResponse result = createJobCommand(objectName,operation,externalIdFieldName);
-			uploadFileOperation(result.contentUrl,current.getName());
-			closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
-			jobs.put(result.id,null);
+			if (current.isFile()) {
+				CreateJobResponse result = createJobCommand(objectName,operation,externalIdFieldName);
+				uploadFileOperation(result.contentUrl,current.getPath());
+				closeJobCommand(result.id,CloseJobRequest.UPLOADCOMPLETE);
+				jobs.put(result.id,null);	
+			}
 		}
 		
 		boolean anyRemaining;
