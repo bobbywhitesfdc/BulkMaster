@@ -104,7 +104,7 @@ public class BulkMaster  {
 			mgr.executeCommand();
 			
 		} catch (Throwable t) {
-			_logger.log(Level.SEVERE,t.getMessage());
+			_logger.log(Level.SEVERE,t.getClass().getName() + " " + t.getMessage());
 			if (t instanceof AuthenticationException) {
 				System.exit(1);
 			} else {
@@ -196,6 +196,8 @@ public class BulkMaster  {
 		switch(this.currentCommand) {
 		case LIST:
 			GetAllJobsResponse jobs = listJobsCommand();
+			jobs.filter(this.objectName,null);
+			jobs.summarize();
 			System.out.println("Jobs" + jobs);
 			break;
 		case INSERT:

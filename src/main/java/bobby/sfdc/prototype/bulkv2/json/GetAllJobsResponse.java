@@ -1,31 +1,45 @@
 package bobby.sfdc.prototype.bulkv2.json;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bobby.sfdc.prototype.rest.AbstractJSONBody;
+
 /**
   Response to GetAllJobs API call
 **/
-public class GetAllJobsResponse {
-	boolean done;
-	JobInfo[] records;
-	String nextRecordsUrl;
+public class GetAllJobsResponse extends AbstractJSONBody {
+	public boolean done;
+	public JobInfo[] records;
+	public String nextRecordsUrl;
+	// Computed summary fields
+	public int runningJobs=0;
+	public int completedJobs=0;
+	/**
+	 * Optionally Filter the summary/print by objectName and Operation
+	 * @param objectName
+	 * @param operation
+	 */
+	public void filter(String objectName, String operation) {
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("done=");
-		builder.append(done);
-		if (nextRecordsUrl != null) {
-			builder.append(", ");
-			builder.append("nextRecordsUrl=");
-			builder.append(nextRecordsUrl);
-		}
-		if (records != null) {
-			builder.append("[\n");
-			for(JobInfo current : records) {
-				builder.append(current);
-				builder.append('\n');
+		// Remove all of the jobs that don't match this object
+		List<JobInfo> onesToKeep = new ArrayList<JobInfo>();
+		for (JobInfo current : records) {
+			if ((objectName == null || current.object.compareTo(objectName)==0) 
+				&& operation == null || current.operation.compareTo(operation)==0) {
+				onesToKeep.add(current);	
 			}
-			builder.append("]");
 		}
-		return builder.toString();
+		records = (JobInfo[])onesToKeep.toArray(new JobInfo[onesToKeep.size()]);
+
 	}
-	
+	public void summarize() {
+		runningJobs=0;
+		completedJobs=0;
+
+		for (JobInfo current : records) {
+			if (current.isRunning()) runningJobs++;
+			if (current.isComplete()) completedJobs++;
+		}
+	}
 }
