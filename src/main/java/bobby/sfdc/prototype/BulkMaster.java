@@ -22,6 +22,7 @@ import org.apache.http.client.ClientProtocolException;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
 import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
+import bobby.sfdc.prototype.util.CSVSplitManager;
 import bobby.sfdc.prototype.util.CommandlineHelper;
 
 import com.google.gson.Gson;
@@ -215,6 +216,11 @@ public class BulkMaster  {
 				processDMLCommand(inputFileName,objectName,"hardDelete","");
 			}
 			break;
+		case PURGE:
+			{
+				processPurgeCommand(objectName,queryString,outputDir);
+			}
+			break;
 		case RESULTS:
 			pollForResults(this.jobId,this.pollingInterval);
 			break;
@@ -236,6 +242,19 @@ public class BulkMaster  {
 
 					
 		
+	}
+
+	private void processPurgeCommand(String objectName, String queryString, String outputDir) throws Throwable {
+		// Run the Query
+		BulkV1JobResponse response = executeQueryCommand(objectName,queryString);
+		// Split the results files
+		File workingDir = new File(outputDir+ File.separator + objectName+"." +response.id);
+		workingDir.mkdir();
+		CSVSplitManager mgr = new CSVSplitManager();
+		mgr.splitAllFiles(new File(outputDir),workingDir);
+			
+		// Run a Hard Delete on the Results, Polling until completion
+		processDMLCommand(workingDir.getPath(),objectName,"hardDelete","");
 	}
 
 	/**
@@ -468,7 +487,8 @@ public class BulkMaster  {
 		CLOSEJOB,
 		ABORTJOB,
 		RESULTS,
-		QUERY
+		QUERY,
+		PURGE // A one step command that Queries and hard deletes
 	}
 	
 	public enum Flags {
@@ -476,6 +496,7 @@ public class BulkMaster  {
 		INSERT("i","Insert Records"),
 		UPSERT("u","Upsert Records"),
 		DELETE("d","Delete Records"),
+		PURGE("purge","One step command that queries and purges",true),
 		STATUS("s","Get Job Status"),
 		CLOSEJOB("c","Close Job"),
 		ABORTJOB("a","Abort Job"),

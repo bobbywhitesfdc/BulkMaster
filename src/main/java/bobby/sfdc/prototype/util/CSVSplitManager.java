@@ -53,6 +53,20 @@ public class CSVSplitManager {
 
 	public CSVSplitManager() {
 	}
+	
+	/**
+	 * Split all of the Files in the Source Directory, placing them in the output directory
+	 * @param srcDir
+	 * @param workingDir
+	 * @throws IOException 
+	 */
+	public void splitAllFiles(File srcDir, File workingDir) throws IOException {
+		for (File current : srcDir.listFiles()) {
+			if (current.isFile()) {
+				splitFile(current,workingDir);
+			}
+		}
+	}
 
 	/**
 	 * Split the original file creating 1 or more files that contain the original records

@@ -59,15 +59,7 @@ public class CommandlineHelper {
 			}
 			
 			
-			
-			if (Flags.JOBID.isFlagSet(flagPart)) {
-				if (valuePart.isEmpty()) {
-					throw new IllegalArgumentException("Invalid JobID!"+valuePart);
-				} else {
-					master.setJobId(valuePart);	
-				}
-			}
-			
+			// Order the commands in case of conflicts (multiples given, last one takes precedence)
 			if (Flags.LIST.isFlagSet(flagPart)) {
 				master.setCurrentCommand(Commands.LIST);
 			}
@@ -92,6 +84,24 @@ public class CommandlineHelper {
 	
 			if (Flags.RESULTS.isFlagSet(flagPart)) {
 				master.setCurrentCommand(Commands.RESULTS);
+			}
+			
+			if (Flags.PURGE.isFlagSet(flagPart)) {
+				master.setCurrentCommand(Commands.PURGE);
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing query string!");
+				} else {
+					master.setQueryString(valuePart);
+				}
+			}
+			
+			// Non-command flags to set various parameters
+			if (Flags.JOBID.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Invalid JobID!"+valuePart);
+				} else {
+					master.setJobId(valuePart);	
+				}
 			}
 			
 			if (Flags.OBJECTNAME.isFlagSet(flagPart)) {
