@@ -244,6 +244,18 @@ public class BulkMaster  {
 		
 	}
 
+	/**
+	 * One-step Purge Command will execute a query, 
+	 *   fetch the results files,
+	 *   split them as needed, 
+	 *   create Delete jobs uploading the results files from the query,
+	 *   poll for all jobs to complete,
+	 *   and download the Delete Job results.
+	 * @param objectName - Object to Purge
+	 * @param queryString - Query to Execute
+	 * @param outputDir - Directory where Query Results CSV files will be placed
+	 * @throws Throwable - Catch all exception if anything goes wrong
+	 */
 	private void processPurgeCommand(String objectName, String queryString, String outputDir) throws Throwable {
 		// Run the Query
 		BulkV1JobResponse response = executeQueryCommand(objectName,queryString);
@@ -252,6 +264,8 @@ public class BulkMaster  {
 		workingDir.mkdir();
 		CSVSplitManager mgr = new CSVSplitManager();
 		mgr.splitAllFiles(new File(outputDir),workingDir);
+		
+		this.outputDir = workingDir.getPath(); // Override the original output dir, Force the results to be placed here
 			
 		// Run a Hard Delete on the Results, Polling until completion
 		processDMLCommand(workingDir.getPath(),objectName,"hardDelete","");
@@ -314,10 +328,12 @@ public class BulkMaster  {
 					anyRemaining = (anyRemaining || info.isRunning());
 				}
 
-			}	
+			}
+			// Sleep for the Polling Interval (once for all jobs)
+			sleep(this.pollingInterval);
 		} while (anyRemaining);
 		
-		
+		_logger.info("processDMLCommand-completed");
 
 	}
 
@@ -332,32 +348,36 @@ public class BulkMaster  {
 	 */
 	private JobInfo pollForResults(String jobId, int interval) throws InterruptedException, ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
 		JobInfo info=null;
-		if (interval > 0) {
-			// Loop until an exception or job completion
 
-			GetJobInfo getter = new GetJobInfo(getInstanceUrl(),getAuthToken());
+		// Loop until an exception or job completion
 
-			do {
-				int waitSec = Math.max(interval,MIN_POLLING_INTERVAL);
-				_logger.info("sleeping " + waitSec + " seconds");
-				Thread.sleep(waitSec * 1000);
-				info = getter.execute(jobId); 
-				_logger.info(info.toString());
-				_logger.info("Is Running?: " + info.isRunning());
-			} while (info.isRunning());
-			
-			if (info!= null && info.isComplete()) {
-				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.SUCCESS,outputDir));
-				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.FAILED,outputDir));
-				_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
-			} else {
-				_logger.info(info == null ? "Unable to get job results " : info.toString());
+		GetJobInfo getter = new GetJobInfo(getInstanceUrl(),getAuthToken());
+
+		do {
+			info = getter.execute(jobId); 
+			_logger.info(info.toString());
+			_logger.info("Is Running?: " + info.isRunning());
+			if (interval > 0) { 
+				sleep(interval);
 			}
-
-			
+		} while (info.isRunning() && interval > 0);
+		
+		if (info!= null && info.isComplete()) {
+			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.SUCCESS,outputDir));
+			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.FAILED,outputDir));
+			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
+		} else {
+			_logger.info(info == null ? "Unable to get job results " : info.toString());
 		}
+
 		return info;
 		
+	}
+
+	private void sleep(int interval) throws InterruptedException {
+		int waitSec = Math.max(interval,MIN_POLLING_INTERVAL);
+		_logger.info("sleeping " + waitSec + " seconds");
+		Thread.sleep(waitSec * 1000);
 	}
 
 	private String getResultsCommand(String jobId, GetJobResults.RESULTKIND kind, String outputDir) throws ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
