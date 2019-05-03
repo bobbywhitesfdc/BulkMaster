@@ -16,7 +16,7 @@ public class CSVSplitManager {
 	private static  Logger _logger = Logger.getLogger(CSVSplitManager.class.getName());
 
 	public static final int DEFAULT_SIZE_LIMIT_MB = 100;
-	public static final long DEFAULT_RECORD_LIMIT = 10000 * 21 * 2;
+	public static final long DEFAULT_RECORD_LIMIT = (10000 * 21 * 2) + 1;
 	private int sizeLimit=DEFAULT_SIZE_LIMIT_MB;
 	private long maxRecords = DEFAULT_RECORD_LIMIT;
 	
