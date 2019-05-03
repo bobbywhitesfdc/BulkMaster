@@ -258,9 +258,9 @@ public class BulkMaster  {
 	 */
 	private void processPurgeCommand(String objectName, String queryString, String outputDir) throws Throwable {
 		// Run the Query
-		BulkV1JobResponse response = executeQueryCommand(objectName,queryString);
+		BulkV1JobResponse queryResponse = executeQueryCommand(objectName,queryString);
 		// Split the results files
-		File workingDir = new File(outputDir+ File.separator + objectName+"." +response.id);
+		File workingDir = new File(outputDir+ File.separator + objectName+"." +queryResponse.id);
 		workingDir.mkdir();
 		CSVSplitManager mgr = new CSVSplitManager();
 		mgr.splitAllFiles(new File(outputDir),workingDir);
@@ -311,10 +311,13 @@ public class BulkMaster  {
 			}
 		}
 		
+		ProcessDMLStatistics statsKeeper= new ProcessDMLStatistics(0); // Initialize just in case to avoid NPE
+		
 		boolean anyRemaining;
 		do {
 			// Any left to process? Reset at the beginning of each iteration
 			anyRemaining=false;
+			statsKeeper = new ProcessDMLStatistics(0);
 			for (String current : jobs.keySet()) {
 
 				// Skip ones that were previously completed and we've already downloaded them
@@ -327,13 +330,16 @@ public class BulkMaster  {
 					// update the status so we'll continue to iterate if any jobs are still running
 					anyRemaining = (anyRemaining || info.isRunning());
 				}
+				
+				// Add this job's info to the stats
+				statsKeeper.addJobInfo(jobs.get(current));
 
 			}
 			// Sleep for the Polling Interval (once for all jobs)
 			sleep(this.pollingInterval);
 		} while (anyRemaining);
 		
-		_logger.info("processDMLCommand-completed");
+		_logger.info("processDMLCommand-completed" + statsKeeper.toString());
 
 	}
 

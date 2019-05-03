@@ -23,8 +23,8 @@ public class JobInfo extends AbstractJSONBody {
 	String object;
 	String operation;
 	int retries;
-	int numberRecordsFailed;
-	int numberRecordsProcessed;
+	public int numberRecordsFailed;
+	public int numberRecordsProcessed;
 	long totalProcessingTime;
 
 	/** Convenience Method to determine if the job is in a running State 
@@ -36,6 +36,9 @@ public class JobInfo extends AbstractJSONBody {
 	}
 	public boolean isComplete() {
 		return "JobComplete".compareTo(state)==0;
+	}
+	public boolean isQueued() {
+		return "UploadComplete".compareTo(state)==0;
 	}
 
 }
