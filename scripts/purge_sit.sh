@@ -14,7 +14,7 @@ else
 	echo URL overriden as $URL
 fi
 
-java -jar ../target/BulkMaster-1.0.jar $1 $2 $URL -o FinServ__FinancialAccount__c -p 60 -purge "Select Id From FinServ__FinancialAccount__c Where LastModifiedById IN (Select Id From User Where Name IN ('CDI API','Lem Revilla','QA Automation User'))" -D ../output/sit/purge-fa
+java -jar ../target/BulkMaster-1.0-jar-with-dependencies.jar $1 $2 $URL -o FinServ__FinancialAccount__c -p 60 -purge "Select Id From FinServ__FinancialAccount__c Where LastModifiedById IN (Select Id From User Where Name IN ('CDI API','Lem Revilla','QA Automation User'))" -D ../output/sit/purge-fa
 RESULT=$?
 if [ $RESULT == 0 ]
 then
@@ -24,7 +24,7 @@ else
 	exit $RESULT
 fi
 
-java -jar ../target/BulkMaster-1.0.jar $1 $2 $URL -o Account -p 60 -purge "Select Id From Account Where LastModifiedById IN (Select Id From User Where Name IN ('CDI API','Lem Revilla','QA Automation User'))" -D ../output/sit/purge-account
+java -jar ../target/BulkMaster-1.0-jar-with-dependencies.jar $1 $2 $URL -o Account -p 60 -purge "Select Id From Account Where LastModifiedById IN (Select Id From User Where Name IN ('CDI API','Lem Revilla','QA Automation User'))" -D ../output/sit/purge-account
 
 RESULT=$?
 if [ $RESULT == 0 ] 
