@@ -36,4 +36,10 @@ It's packaged as an executable jar, run it from the commandline as follows
 </code>
 # Example One-step Purge in a Sandbox
 <p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -o Lead -purge "Select * From Lead Where status='Converted'" - D ./output -p 60</code></p>
+# Example List Jobs
+<p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -l</code></p>
+# Example Execute a Query -- Poll for results every 10 seconds, download the results to ./output directory
+<p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -o Lead -q "Select * From Lead Where status='New'" - D ./output -p 10</code></p>
+# Example Poll for Results on a running job -- Poll for results every 10 seconds, download results to ./output directory
+<p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com  -r -j 7500U000002UO1V  - D ./output -p 10</code></p>
 
