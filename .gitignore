@@ -6,6 +6,8 @@ dist
 .classpath
 target/
 output/
+scripts/
+scripts
 target
 output
 
