@@ -100,7 +100,7 @@ public class BulkMaster  {
 		
 			mgr.getAuthToken(userId, password);
 
-			System.out.println("Instance URL:" + mgr.getInstanceUrl());
+			System.err.println("Instance URL:" + mgr.getInstanceUrl());
 			
 			mgr.executeCommand();
 			
@@ -199,7 +199,7 @@ public class BulkMaster  {
 			GetAllJobsResponse jobs = listJobsCommand();
 			jobs.filter(this.objectName,null);
 			jobs.summarize();
-			System.out.println("Jobs" + jobs);
+			System.out.println(jobs);
 			break;
 		case INSERT:
 			{

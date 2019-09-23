@@ -71,7 +71,7 @@ public class AuthenticationHelper {
 
 			OAuthTokenSuccessResponse results = getGson().fromJson(EntityUtils.toString(response.getEntity()), OAuthTokenSuccessResponse.class);
 
-			System.out.println(results.toString());
+			System.err.println(results.toString());
 			
 			return results;
 			
