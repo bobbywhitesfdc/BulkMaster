@@ -221,6 +221,11 @@ public class BulkMaster  {
 				processPurgeCommand(objectName,queryString,outputDir);
 			}
 			break;
+		case UBER_UPSERT:
+			{
+				processUberDMLCommand(objectName,"upsert",this.externalIdFieldName,inputFileName,outputDir);
+			
+			}
 		case RESULTS:
 			pollForResults(this.jobId,this.pollingInterval);
 			break;
@@ -242,6 +247,31 @@ public class BulkMaster  {
 
 					
 		
+	}
+	
+	/**
+	 * One-step Uber DML Command will:
+	 *   split the input file as needed, 
+	 *   create Delete jobs uploading the results files from the query,
+	 *   poll for all jobs to complete,
+	 *   and download the DML Job results.
+	 * @param objectName - Object to Purge
+	 * @param dmlOperation - DML Operation to run:  insert, update, delete, hardDelete
+	 * @param outputDir - Directory where Query Results CSV files will be placed
+	 * @throws Throwable - Catch all exception if anything goes wrong
+	 */
+	private void processUberDMLCommand(final String objectName, final String dmlOperation, final String externalIdFieldName, final String inputFile, String outputDir) throws Throwable {
+		// Split the Input files
+		//TODO connect the Working Dir to the InputFile
+		File workingDir = new File(outputDir+ File.separator + objectName);
+		workingDir.mkdir();
+		CSVSplitManager mgr = new CSVSplitManager();
+		mgr.splitAllFiles(new File(outputDir),workingDir);
+		
+		this.outputDir = workingDir.getPath(); // Override the original output dir, Force the results to be placed here
+			
+		// Run a Hard Delete on the Results, Polling until completion
+		processDMLCommand(workingDir.getPath(),objectName,dmlOperation,externalIdFieldName);
 	}
 
 	/**
@@ -515,12 +545,14 @@ public class BulkMaster  {
 		RESULTS,
 		QUERY,
 		PURGE // A one step command that Queries and hard deletes
+	  , UBER_UPSERT // A one step command that takes an "infinitely large" input file and upserts it.
 	}
 	
 	public enum Flags {
 		LIST("l","List Jobs"),
 		INSERT("i","Insert Records"),
 		UPSERT("u","Upsert Records"),
+		UBER_UPSERT("uu","One step Upsert that splits and submits jobs for upserts, polls for results"),
 		DELETE("d","Delete Records"),
 		PURGE("purge","One step command that queries and purges",true),
 		STATUS("s","Get Job Status"),

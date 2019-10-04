@@ -94,6 +94,10 @@ public class CommandlineHelper {
 					master.setQueryString(valuePart);
 				}
 			}
+			if (Flags.UBER_UPSERT.isFlagSet(flagPart)) {
+				master.setCurrentCommand(Commands.UBER_UPSERT);
+			}
+
 			
 			// Non-command flags to set various parameters
 			if (Flags.JOBID.isFlagSet(flagPart)) {
