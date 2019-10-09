@@ -42,4 +42,6 @@ It's packaged as an executable jar, run it from the commandline as follows
 <p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -o Lead -q "Select * From Lead Where status='New'" - D ./output -p 10</code></p>
 # Example Poll for Results on a running job -- Poll for results every 10 seconds, download results to ./output directory
 <p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com  -r -j 7500U000002UO1V  - D ./output -p 10</code></p>
+# Example One-step "Uber Upsert" a collection of files for a single object
+<p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -o Account -x MyExternalId__c -uu ./input/AccountData - D ./output/AccountResults -p 60</code></p>
 
