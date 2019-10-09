@@ -96,6 +96,12 @@ public class CommandlineHelper {
 			}
 			if (Flags.UBER_UPSERT.isFlagSet(flagPart)) {
 				master.setCurrentCommand(Commands.UBER_UPSERT);
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing input directory!");
+				} else {
+					validateDirectory(valuePart);
+					master.setInputDir(valuePart);
+				}
 			}
 
 			

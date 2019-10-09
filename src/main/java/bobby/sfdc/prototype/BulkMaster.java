@@ -72,6 +72,7 @@ public class BulkMaster  {
 	private int pollingInterval=0;
 	private String queryString;
 	private boolean pkChunkingEnabled=false;
+	private String inputDirName;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -223,7 +224,7 @@ public class BulkMaster  {
 			break;
 		case UBER_UPSERT:
 			{
-				processUberDMLCommand(objectName,"upsert",this.externalIdFieldName,inputFileName,outputDir);
+				processUberDMLCommand(objectName,"upsert",this.externalIdFieldName,inputDirName,outputDir);
 			
 			}
 		case RESULTS:
@@ -252,7 +253,7 @@ public class BulkMaster  {
 	/**
 	 * One-step Uber DML Command will:
 	 *   split the input file as needed, 
-	 *   create Delete jobs uploading the results files from the query,
+	 *   create <dml> jobs uploading the results files from the query,
 	 *   poll for all jobs to complete,
 	 *   and download the DML Job results.
 	 * @param objectName - Object to Purge
@@ -260,17 +261,18 @@ public class BulkMaster  {
 	 * @param outputDir - Directory where Query Results CSV files will be placed
 	 * @throws Throwable - Catch all exception if anything goes wrong
 	 */
-	private void processUberDMLCommand(final String objectName, final String dmlOperation, final String externalIdFieldName, final String inputFile, String outputDir) throws Throwable {
-		// Split the Input files
-		//TODO connect the Working Dir to the InputFile
-		File workingDir = new File(outputDir+ File.separator + objectName);
+	private void processUberDMLCommand(final String objectName, final String dmlOperation, final String externalIdFieldName, final String inputDirName, final String outputDir) throws Throwable {
+		// Split the Input files contained in the inputDir
+		final File inputDir = new File(inputDirName);
+		// Split files will be placed in the working dir
+		final File workingDir = new File(outputDir+ File.separator + objectName);
 		workingDir.mkdir();
 		CSVSplitManager mgr = new CSVSplitManager();
-		mgr.splitAllFiles(new File(outputDir),workingDir);
+		mgr.splitAllFiles(inputDir,workingDir);
 		
 		this.outputDir = workingDir.getPath(); // Override the original output dir, Force the results to be placed here
 			
-		// Run a Hard Delete on the Results, Polling until completion
+		// Run the specified DML operation on the Results, Polling until completion
 		processDMLCommand(workingDir.getPath(),objectName,dmlOperation,externalIdFieldName);
 	}
 
@@ -797,6 +799,10 @@ public class BulkMaster  {
 	 */
 	public void setLoginUrl(String loginUrl) {
 		this.loginUrl = loginUrl;
+	}
+
+	public void setInputDir(String inputDirName) {
+		this.inputDirName = inputDirName;
 	}
 
 }
