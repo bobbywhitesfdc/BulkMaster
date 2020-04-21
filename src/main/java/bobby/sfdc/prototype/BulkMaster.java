@@ -72,6 +72,7 @@ public class BulkMaster  {
 	private int pollingInterval=0;
 	private String queryString;
 	private boolean pkChunkingEnabled=false;
+	private long maxRecords = CSVSplitManager.DEFAULT_RECORD_LIMIT;
 	private String inputDirName;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
@@ -193,6 +194,10 @@ public class BulkMaster  {
 		this.pkChunkingEnabled = pkChunkingEnabled;
 	}
 
+	public void setMaxRecords(String maxRecordValueString) {
+		this.maxRecords = Integer.valueOf(maxRecordValueString);
+	}
+
 	private void executeCommand() throws Throwable {
 		
 		switch(this.currentCommand) {
@@ -227,6 +232,7 @@ public class BulkMaster  {
 				processUberDMLCommand(objectName,"upsert",this.externalIdFieldName,inputDirName,outputDir);
 			
 			}
+			break;
 		case RESULTS:
 			pollForResults(this.jobId,this.pollingInterval);
 			break;
@@ -249,6 +255,13 @@ public class BulkMaster  {
 					
 		
 	}
+
+	private CSVSplitManager getSplitManager() {
+		CSVSplitManager manager = new CSVSplitManager();
+		manager.maxRecords = this.maxRecords;
+		return manager;
+	}
+
 	
 	/**
 	 * One-step Uber DML Command will:
@@ -267,7 +280,7 @@ public class BulkMaster  {
 		// Split files will be placed in the working dir
 		final File workingDir = new File(outputDir+ File.separator + objectName);
 		workingDir.mkdir();
-		CSVSplitManager mgr = new CSVSplitManager();
+		CSVSplitManager mgr = getSplitManager();
 		mgr.splitAllFiles(inputDir,workingDir);
 		
 		this.outputDir = workingDir.getPath(); // Override the original output dir, Force the results to be placed here
@@ -294,7 +307,7 @@ public class BulkMaster  {
 		// Split the results files
 		File workingDir = new File(outputDir+ File.separator + objectName+"." +queryResponse.id);
 		workingDir.mkdir();
-		CSVSplitManager mgr = new CSVSplitManager();
+		CSVSplitManager mgr = getSplitManager();
 		mgr.splitAllFiles(new File(outputDir),workingDir);
 		
 		this.outputDir = workingDir.getPath(); // Override the original output dir, Force the results to be placed here
@@ -400,7 +413,7 @@ public class BulkMaster  {
 			}
 		} while (info.isRunning() && interval > 0);
 		
-		if (info!= null && info.isComplete()) {
+		if (info!= null && (info.isComplete() || interval <= 0)) { // If not polling, immediately download results
 			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.SUCCESS,outputDir));
 			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.FAILED,outputDir));
 			_logger.info(getResultsCommand(info.id, GetJobResults.RESULTKIND.UNPROCESSED,outputDir));
@@ -568,7 +581,8 @@ public class BulkMaster  {
 		OBJECTNAME("o","Object name for Insert, Update, or Delete",true),
 		POLL("p","Poll for results - interval in seconds",true),
 		QUERY("q","SOQL Query string",true),
-		PKCHUNKING("pk","Enable PK Chunking for Large Queries");
+		PKCHUNKING("pk","Enable PK Chunking for Large Queries"),
+		MAXRECORDS("mx","Maximum records per job",true);
 		
 		final private String label;
 		final private String description;
@@ -672,9 +686,9 @@ public class BulkMaster  {
 	public void initConnectedAppFromConfigFile(String fileName) throws FileNotFoundException, IOException {
 		Properties props = new Properties();
 		props.load(BulkMaster.class.getResourceAsStream(fileName));
-		this.consumerKey = (String) props.getProperty(CONSUMER_KEY_PROP);
-		this.consumerSecret = (String) props.getProperty(CONSUMER_SECRET_PROP);
-		this.loginUrl = (String) props.getProperty(LOGIN_URL_PROP);
+		this.consumerKey = props.getProperty(CONSUMER_KEY_PROP);
+		this.consumerSecret = props.getProperty(CONSUMER_SECRET_PROP);
+		this.loginUrl = props.getProperty(LOGIN_URL_PROP);
 	}
 	
 	

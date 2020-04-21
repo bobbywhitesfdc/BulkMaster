@@ -1,6 +1,7 @@
 bin
 build
 dist
+**/*.csv
 .DS_Store
 .settings
 .classpath
@@ -12,3 +13,4 @@ target
 output
 
 
+.classpath

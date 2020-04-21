@@ -165,6 +165,13 @@ public class CommandlineHelper {
 			if (Flags.PKCHUNKING.isFlagSet(flagPart)) {
 				master.setPkChunkingEnabled(true);			
 			}			
+			if (Flags.MAXRECORDS.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing max records value!");
+				} else {
+					master.setMaxRecords(valuePart);
+				}				
+			}			
 		}
 	}
 
