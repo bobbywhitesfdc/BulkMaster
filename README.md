@@ -33,6 +33,7 @@ It's packaged as an executable jar, run it from the commandline as follows
 <p>-p Poll for results - interval in seconds</p>
 <p>-q SOQL Query string</p>
 <p>-pk Enable PK Chunking for Large Queries</p>
+<p>-mx Max records per job</p>
 </code>
 # Example One-step Purge in a Sandbox
 <p><code>java -jar target/BulkMaster-1.0.jar myuser@myorg.com MyPassword https://test.salesforce.com -o Lead -purge "Select * From Lead Where status='Converted'" - D ./output -p 60</code></p>
