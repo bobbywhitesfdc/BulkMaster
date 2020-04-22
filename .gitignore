@@ -4,13 +4,10 @@ dist
 **/*.csv
 .DS_Store
 .settings
-.classpath
+.vscode
 target/
 output/
 scripts/
 scripts
 target
 output
-
-
-.classpath
