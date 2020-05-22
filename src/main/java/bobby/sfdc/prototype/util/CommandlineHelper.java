@@ -86,6 +86,11 @@ public class CommandlineHelper {
 				master.setCurrentCommand(Commands.RESULTS);
 			}
 			
+			if (Flags.UPSERT.isFlagSet(flagPart)) {
+				master.setCurrentCommand(Commands.UPSERT);
+			}
+
+			
 			if (Flags.PURGE.isFlagSet(flagPart)) {
 				master.setCurrentCommand(Commands.PURGE);
 				if (valuePart.isEmpty()) {
