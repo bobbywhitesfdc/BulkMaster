@@ -25,8 +25,9 @@ public class GetAllJobsResponse extends AbstractJSONBody {
 		// Remove all of the jobs that don't match this object
 		List<JobInfo> onesToKeep = new ArrayList<JobInfo>();
 		for (JobInfo current : records) {
-			if ((objectName == null || current.object.compareTo(objectName)==0) 
-				&& operation == null || current.operation.compareTo(operation)==0) {
+			boolean matchObjectName = (objectName == null || current.object.compareTo(objectName)==0);
+			boolean matchOperation = (operation == null || current.operation.compareTo(operation)==0);
+			if (matchObjectName && matchOperation) {
 				onesToKeep.add(current);	
 			}
 		}
