@@ -109,6 +109,7 @@ public class BulkMaster  {
 			} else if (mgr.isUsernamePasswordLogin()) {
 				mgr.getAuthToken(mgr.getUserName(), mgr.getPassword());				
 			} else {
+				throw new IllegalArgumentException("No valid authentication parameters passed");
 			}
 			
 			mgr.executeCommand();
