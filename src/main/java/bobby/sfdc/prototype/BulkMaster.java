@@ -91,13 +91,24 @@ public class BulkMaster  {
 			
 			// Order is important here because of overrides
 			mgr.initConnectedAppFromConfigFile("/connectedapp.properties");
-			mgr.setOptionsFromCommandlineFlags(args);		
+			mgr.setOptionsFromCommandlineFlags(args);
+			
+			// For backwards compatibility of scripts assume that Username & Password are passed in
+			mgr.setUsername(args[0]);
+			mgr.setPassword(args[1]);
 
-			if (mgr.isUsernamePasswordLogin()) {
+			String loginUrl = args.length >=3 ? args[2] : DEFAULT_LOGIN_URL;
+			if (!loginUrl.startsWith("https:")) {
+				loginUrl = DEFAULT_LOGIN_URL;
+			}
+			mgr.setLoginUrl(loginUrl);
+
+			if (mgr.isExternalAuth()) {
+				// Must have AuthToken & Instance URL passed in on the command line
+				mgr.validateAuthToken();				
+			} else if (mgr.isUsernamePasswordLogin()) {
 				mgr.getAuthToken(mgr.getUserName(), mgr.getPassword());				
 			} else {
-				// Must have AuthToken & Instance URL passed in on the commandline
-				mgr.validateAuthToken();
 			}
 			
 			mgr.executeCommand();
@@ -111,6 +122,10 @@ public class BulkMaster  {
 			}
 		}
 		
+	}
+
+	private boolean isExternalAuth() {		
+		return this._authToken != null && this._instanceUrl != null;
 	}
 
 	private String getUserName() {
