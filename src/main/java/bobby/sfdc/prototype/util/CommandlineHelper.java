@@ -177,6 +177,41 @@ public class CommandlineHelper {
 					master.setMaxRecords(valuePart);
 				}				
 			}			
+			if (Flags.LOGINURL.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing login URL value!");
+				} else {
+					master.setLoginUrl(valuePart);
+				}				
+			}			
+			if (Flags.USERNAME.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing Username value!");
+				} else {
+					master.setUsername(valuePart);
+				}				
+			}			
+			if (Flags.PASSWORD.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing Password value!");
+				} else {
+					master.setPassword(valuePart);
+				}				
+			}			
+			if (Flags.INSTANCEURL.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing Instance URL value!");
+				} else {
+					master.setInstanceUrl(valuePart);
+				}				
+			}			
+			if (Flags.AUTHTOKEN.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing Authtoken value!");
+				} else {
+					master.setAuthToken(valuePart);
+				}				
+			}			
 		}
 	}
 

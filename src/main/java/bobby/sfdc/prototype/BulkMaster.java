@@ -22,6 +22,7 @@ import org.apache.http.client.ClientProtocolException;
 import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
 import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
+import bobby.sfdc.prototype.rest.DataServicesAPI;
 import bobby.sfdc.prototype.util.CSVSplitManager;
 import bobby.sfdc.prototype.util.CommandlineHelper;
 
@@ -74,6 +75,8 @@ public class BulkMaster  {
 	private boolean pkChunkingEnabled=false;
 	private long maxRecords = CSVSplitManager.DEFAULT_RECORD_LIMIT;
 	private String inputDirName;
+	private String userName;
+	private String password;
 	private static  Logger _logger = Logger.getLogger(BulkMaster.class.getName());
 	
 	public static final String DATE_INPUT_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
@@ -85,24 +88,17 @@ public class BulkMaster  {
 				CommandlineHelper.printSyntaxStatement();
 				throw new IllegalArgumentException("Missing required command line arguments");
 			}
-			String userId = args[0];
-			String password = args[1];
-			
-			String loginUrl = args.length >=3 ? args[2] : DEFAULT_LOGIN_URL;
-			if (!loginUrl.startsWith("https:")) {
-				loginUrl = DEFAULT_LOGIN_URL;
-			}
 			
 			// Order is important here because of overrides
 			mgr.initConnectedAppFromConfigFile("/connectedapp.properties");
 			mgr.setOptionsFromCommandlineFlags(args);		
-			mgr.setLoginUrl(loginUrl);
 
-			
-		
-			mgr.getAuthToken(userId, password);
-
-			System.err.println("Instance URL:" + mgr.getInstanceUrl());
+			if (mgr.isUsernamePasswordLogin()) {
+				mgr.getAuthToken(mgr.getUserName(), mgr.getPassword());				
+			} else {
+				// Must have AuthToken & Instance URL passed in on the commandline
+				mgr.validateAuthToken();
+			}
 			
 			mgr.executeCommand();
 			
@@ -115,6 +111,30 @@ public class BulkMaster  {
 			}
 		}
 		
+	}
+
+	private String getUserName() {
+		return this.userName;
+	}
+
+	/**
+	 * If the Instance URL and AuthToken are invalid, throw an exception
+	 * @throws AuthenticationException 
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 * @throws ClientProtocolException 
+	 **/
+	private void validateAuthToken() throws IllegalArgumentException, ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
+		new DataServicesAPI(getInstanceUrl(),getAuthToken()).execute();
+	}
+
+	private String getPassword() {
+		return this.password;
+	}
+
+	// Have Username, Password, and Login URL been set?
+	private boolean isUsernamePasswordLogin() {
+		return (this.loginUrl != null && this.getUserName() != null && this.getPassword() != null);
 	}
 
 	private void setOptionsFromCommandlineFlags(String[] args) {
@@ -582,7 +602,13 @@ public class BulkMaster  {
 		POLL("p","Poll for results - interval in seconds",true),
 		QUERY("q","SOQL Query string",true),
 		PKCHUNKING("pk","Enable PK Chunking for Large Queries"),
-		MAXRECORDS("mx","Maximum records per job",true);
+		MAXRECORDS("mx","Maximum records per job",true),
+		AUTHTOKEN("authtoken","Auth Token",true),
+		INSTANCEURL("instanceurl","Instance URL used for API calls",true),
+		LOGINURL("loginurl","Login URL if using Username Password flow",true),
+		USERNAME("un","User name",true),
+		PASSWORD("pwd","Password",true);
+		
 		
 		final private String label;
 		final private String description;
@@ -753,7 +779,7 @@ public class BulkMaster  {
 		return _authToken;
 	}
 
-	protected void setAuthToken(String authToken) {
+	public void setAuthToken(String authToken) {
 		this._authToken = authToken;
 	}
 
@@ -761,7 +787,7 @@ public class BulkMaster  {
 		return _instanceUrl;
 	}
 
-	protected void setInstanceUrl(String instanceUrl) {
+	public void setInstanceUrl(String instanceUrl) {
 		this._instanceUrl = instanceUrl;
 	}
 
@@ -817,6 +843,14 @@ public class BulkMaster  {
 
 	public void setInputDir(String inputDirName) {
 		this.inputDirName = inputDirName;
+	}
+
+	public void setUsername(String userNameValue) {
+		this.userName = userNameValue;
+	}
+
+	public void setPassword(String passwordValue) {
+		this.password = passwordValue;
 	}
 
 }
