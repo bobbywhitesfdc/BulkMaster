@@ -22,7 +22,7 @@ public class CreateJob extends AbstractAPIBase {
 	public CreateJob(String instanceUrl, String authToken) {
 		super(instanceUrl,authToken);
 	}
-	public static final String RESOURCE="/services/data/v45.0/jobs/ingest";
+	public static final String RESOURCE="/services/data/v48.0/jobs/ingest";
     public static final String METHOD="POST";
 	public CreateJobResponse execute(final String objectName, final String operation, final String externalIdFieldName) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();

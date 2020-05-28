@@ -11,19 +11,19 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import bobby.sfdc.prototype.oauth.AuthenticationException;
-import bobby.sfdc.prototype.rest.json.DataServicesResponse;
+import bobby.sfdc.prototype.rest.json.DataServicesVersionsResponse;
 
 /**
- * Lightweight but authenticated API to validate that the AuthToken and InstanceURL are valid
+ * Unauthenticated API to query the available API versions
  * @author bobby.white
  *
  */
-public class DataServicesAPI extends AbstractAPIBase {
-	public DataServicesAPI(String instanceUrl, String authToken) {
+public class DataServicesVersions extends AbstractAPIBase {
+	public DataServicesVersions(String instanceUrl, String authToken) {
 		super(instanceUrl, authToken);
 	}
-	public static final String RESOURCE="/services/data/v48.0";
-	public DataServicesResponse execute() throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
+	public static final String RESOURCE="/services/data";
+	public DataServicesVersionsResponse[] execute() throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    URIBuilder builder = new URIBuilder(getInstanceUrl() + RESOURCE); // No Parameters required
 
@@ -33,7 +33,8 @@ public class DataServicesAPI extends AbstractAPIBase {
 		getDataServices.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
 
 		
-		APIExecutor<DataServicesResponse> api = new APIExecutor<DataServicesResponse>(DataServicesResponse.class,getAuthToken());
+		APIExecutor<DataServicesVersionsResponse[]> api = new APIExecutor<DataServicesVersionsResponse[]>(DataServicesVersionsResponse[].class,getAuthToken());
 		return api.processAPIGetResponse(client, getDataServices);
 	}
 }
+

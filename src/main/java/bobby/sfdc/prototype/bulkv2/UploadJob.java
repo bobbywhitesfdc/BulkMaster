@@ -18,7 +18,7 @@ import bobby.sfdc.prototype.rest.APIExecutor;
 import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
 public class UploadJob extends AbstractAPIBase {
-	public static final String RESOURCE="/services/data/v45.0/jobs/ingest/{jobId}";
+	//public static final String RESOURCE="/jobs/ingest/{jobId}";  // Not used as ContentUrl provides this URI
 	public static final String METHOD="PUT";
 	
 	public UploadJob(String instanceUrl,String authToken) {

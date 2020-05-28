@@ -23,6 +23,8 @@ import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.oauth.AuthenticationHelper;
 import bobby.sfdc.prototype.oauth.json.OAuthTokenSuccessResponse;
 import bobby.sfdc.prototype.rest.DataServicesAPI;
+import bobby.sfdc.prototype.rest.DataServicesVersions;
+import bobby.sfdc.prototype.rest.json.DataServicesVersionsResponse;
 import bobby.sfdc.prototype.util.CSVSplitManager;
 import bobby.sfdc.prototype.util.CommandlineHelper;
 
@@ -112,6 +114,8 @@ public class BulkMaster  {
 				throw new IllegalArgumentException("No valid authentication parameters passed");
 			}
 			
+			mgr.detectAPIVersion();
+			
 			mgr.executeCommand();
 			
 		} catch (Throwable t) {
@@ -123,6 +127,22 @@ public class BulkMaster  {
 			}
 		}
 		
+	}
+
+	/**
+	 * Connect to the Salesforce instance and determine the latest available version
+	 * e.g. V48.0 or V50.0
+	 * As new Salesforce major releases rollout in a staggered fashion, this will support a dynamic
+	 * approach to picking the most recent API version actually available.
+	 * @throws AuthenticationException 
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 * @throws ClientProtocolException 
+	 **/
+	public String detectAPIVersion() throws ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
+		DataServicesVersionsResponse[] response = new DataServicesVersions(getInstanceUrl(),getAuthToken()).execute();
+		
+		return response != null && response.length > 0 ? response[response.length].url : null;
 	}
 
 	private boolean isExternalAuth() {		
