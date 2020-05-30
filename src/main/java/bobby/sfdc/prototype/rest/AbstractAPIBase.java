@@ -38,6 +38,18 @@ public abstract class AbstractAPIBase {
 		return this.instanceUrl;
 	}
 	
+	/**
+	 * Get an API VERSION specific instance of this Resource
+	 * /services/data/v{%apiversion%}/jobs/ingest
+	 * 
+	 * @param resource Templated Resource URI /services/data/v{%apiversion%}/jobs/ingest
+	 * @return Version specific resource URI - /services/data/v48.0/jobs/ingest
+	 */
+	protected String getVersionedResource(String resource) {
+		return BulkMaster.getURLFromURLTemplate(resource,"apiversion",BulkMaster.getAPIVersion());
+	}
+
+	
 	protected final String getURLFromURLTemplate(final String resource, final String paramName, final String paramValue) {
 		return BulkMaster.getURLFromURLTemplate(resource,paramName,paramValue);
 	}

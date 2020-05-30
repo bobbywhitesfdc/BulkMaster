@@ -82,7 +82,8 @@ public class APIExecutor<ResponseClassType> {
 			} else if (apiOperation instanceof HttpPut) {
 				response = client.execute((HttpPut) apiOperation);				
 				uri = ((HttpPut)apiOperation).getURI().toString();
-			}	
+			}
+			System.err.println(uri);
 			
 			int code = response.getStatusLine().getStatusCode();
 			

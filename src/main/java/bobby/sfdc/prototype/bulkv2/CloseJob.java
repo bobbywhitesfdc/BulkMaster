@@ -20,10 +20,10 @@ public class CloseJob extends AbstractAPIBase {
 	public CloseJob(String instanceUrl, String authToken) {
 		super(instanceUrl, authToken);
 	}
-	public static final String RESOURCE="/services/data/v45.0/jobs/ingest/%jobId%";
+	public static final String RESOURCE="/services/data/v%apiversion%/jobs/ingest/%jobId%";
 	public JobInfo execute(final String jobId, final String subCommand) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
-	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(RESOURCE,"jobId",jobId));
+	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(getVersionedResource(RESOURCE),"jobId",jobId));
 
 		HttpPatch patchJob = new HttpPatch(builder.build());
 		CloseJobRequest request = new CloseJobRequest();

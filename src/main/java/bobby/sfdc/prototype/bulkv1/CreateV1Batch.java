@@ -18,7 +18,7 @@ import bobby.sfdc.prototype.rest.APIExecutor;
 import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
 public class CreateV1Batch extends AbstractAPIBase {
-	public static final String RESOURCE = "/services/async/45.0/job/%jobId%/batch";
+	public static final String RESOURCE = "/services/async/%apiversion%/job/%jobId%/batch";
 	private static final Logger _logger = Logger.getLogger(CreateV1Batch.class.getName());
 
 	public CreateV1Batch(String instanceUrl, String authToken) {
@@ -29,7 +29,7 @@ public class CreateV1Batch extends AbstractAPIBase {
 
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    try {
-		    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(RESOURCE,"jobId",jobId));
+		    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(getVersionedResource(RESOURCE),"jobId",jobId));
 
 	    	HttpPost post = new HttpPost(builder.build());
 		
