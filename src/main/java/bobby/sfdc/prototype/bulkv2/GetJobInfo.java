@@ -17,10 +17,10 @@ public class GetJobInfo extends AbstractAPIBase {
 	public GetJobInfo(String instanceUrl, String authToken) {
 		super(instanceUrl, authToken);
 	}
-	public static final String RESOURCE="/services/data/v45.0/jobs/ingest/%jobId%";
+	public static final String RESOURCE="/services/data/v%apiversion%/jobs/ingest/%jobId%";
 	public JobInfo execute(final String jobId) throws URISyntaxException, ClientProtocolException, IOException, AuthenticationException {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
-	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(RESOURCE,"jobId",jobId));
+	    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(getVersionedResource(RESOURCE),"jobId",jobId));
 
 		HttpGet getInfo = new HttpGet(builder.build());
 		APIExecutor<JobInfo> api = new APIExecutor<JobInfo>(JobInfo.class,getAuthToken());

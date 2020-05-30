@@ -15,7 +15,7 @@ import bobby.sfdc.prototype.oauth.AuthenticationException;
 import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
 public class GetV1BatchResultContent extends AbstractAPIBase {
-	public static final String RESOURCE="/services/async/45.0/job/%jobId%/batch/%batchId%/result/%resultId%";
+	public static final String RESOURCE="/services/async/%apiversion%/job/%jobId%/batch/%batchId%/result/%resultId%";
 	private static final Logger _logger = Logger.getLogger(GetV1BatchResultContent.class.getName());
 
 	public GetV1BatchResultContent(String instanceUrl, String authToken) {
@@ -41,7 +41,7 @@ public class GetV1BatchResultContent extends AbstractAPIBase {
 		    URIBuilder builder = new URIBuilder(getInstanceUrl() 
 		    			  + getURLFromURLTemplate(
 		    				getURLFromURLTemplate(
-		    				getURLFromURLTemplate(RESOURCE,"batchId",batchId)
+		    				getURLFromURLTemplate(getVersionedResource(RESOURCE),"batchId",batchId)
 		    				,"jobId",jobId)
 		    				,"resultId",resultId));
 

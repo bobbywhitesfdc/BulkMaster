@@ -57,6 +57,7 @@ public class BulkMaster  {
 	private static final String CONSUMER_SECRET_PROP = "consumer.secret";
 	private static final String LOGIN_URL_PROP = "login.url";
 	private static final int MIN_POLLING_INTERVAL = 5;
+	private static String apiVersion=null; // Assume nothing here
 
 	private Gson _gson;
 	private String _authToken=null;
@@ -114,7 +115,10 @@ public class BulkMaster  {
 				throw new IllegalArgumentException("No valid authentication parameters passed");
 			}
 			
-			mgr.detectAPIVersion();
+			if (getAPIVersion()==null) {
+				// Dynamically query the API version for this Org
+				BulkMaster.setAPIVersion(mgr.detectAPIVersion());
+			}
 			
 			mgr.executeCommand();
 			
@@ -129,6 +133,13 @@ public class BulkMaster  {
 		
 	}
 
+	public static void setAPIVersion(String newVersion) {
+		apiVersion = newVersion;
+	}
+	public static String getAPIVersion() {
+		return apiVersion;
+	}
+
 	/**
 	 * Connect to the Salesforce instance and determine the latest available version
 	 * e.g. V48.0 or V50.0
@@ -140,9 +151,10 @@ public class BulkMaster  {
 	 * @throws ClientProtocolException 
 	 **/
 	public String detectAPIVersion() throws ClientProtocolException, URISyntaxException, IOException, AuthenticationException {
-		DataServicesVersionsResponse[] response = new DataServicesVersions(getInstanceUrl(),getAuthToken()).execute();
-		
-		return response != null && response.length > 0 ? response[response.length].url : null;
+		final DataServicesVersionsResponse[] response = new DataServicesVersions(getInstanceUrl(),getAuthToken()).execute();
+		final DataServicesVersionsResponse latest = response[response.length-1];
+		System.err.println(latest.label);
+		return latest.version;
 	}
 
 	private boolean isExternalAuth() {		
@@ -436,8 +448,10 @@ public class BulkMaster  {
 				statsKeeper.addJobInfo(jobs.get(current));
 
 			}
-			// Sleep for the Polling Interval (once for all jobs)
-			sleep(this.pollingInterval);
+			// Sleep for the Polling Interval (once for all jobs), but only if there are remaining jobs
+			if (anyRemaining) {
+				sleep(this.pollingInterval);
+			}
 		} while (anyRemaining);
 		
 		_logger.info("processDMLCommand-completed" + statsKeeper.toString());
@@ -643,7 +657,8 @@ public class BulkMaster  {
 		INSTANCEURL("instanceurl","Instance URL used for API calls",true),
 		LOGINURL("loginurl","Login URL if using Username Password flow",true),
 		USERNAME("un","User name",true),
-		PASSWORD("pwd","Password",true);
+		PASSWORD("pwd","Password",true),
+		APIVERSION("apiversion","API Version xx.0",true);
 		
 		
 		final private String label;
@@ -888,5 +903,4 @@ public class BulkMaster  {
 	public void setPassword(String passwordValue) {
 		this.password = passwordValue;
 	}
-
 }

@@ -212,6 +212,13 @@ public class CommandlineHelper {
 					master.setAuthToken(valuePart);
 				}				
 			}			
+			if (Flags.APIVERSION.isFlagSet(flagPart)) {
+				if (valuePart.isEmpty()) {
+					throw new IllegalArgumentException("Missing APIVERSION value!");
+				} else {
+					BulkMaster.setAPIVersion(valuePart);
+				}				
+			}			
 		}
 	}
 

@@ -19,7 +19,7 @@ import bobby.sfdc.prototype.rest.APIExecutor;
 import bobby.sfdc.prototype.rest.AbstractAPIBase;
 
 public class CreateV1Job extends AbstractAPIBase {
-	public static final String RESOURCE = "/services/async/45.0/job";
+	public static final String RESOURCE = "/services/async/%apiversion%/job";
 	private static final Logger _logger = Logger.getLogger(CreateV1Job.class.getName());
 
 
@@ -31,7 +31,7 @@ public class CreateV1Job extends AbstractAPIBase {
 
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    try {
-	    	URIBuilder builder = new URIBuilder(getInstanceUrl() + RESOURCE);
+	    	URIBuilder builder = new URIBuilder(getInstanceUrl() + getVersionedResource(RESOURCE));
 
 	    	HttpPost post = new HttpPost(builder.build());
 	    	CreateV1JobRequest request = new CreateV1JobRequest();

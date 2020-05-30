@@ -22,7 +22,7 @@ import bobby.sfdc.prototype.rest.AbstractAPIBase;
  *
  */
 public class GetV1BatchResultsList extends AbstractAPIBase {
-	public static final String RESOURCE="/services/async/45.0/job/%jobId%/batch/%batchId%/result";
+	public static final String RESOURCE="/services/async/%apiversion%/job/%jobId%/batch/%batchId%/result";
 	private static final Logger _logger = Logger.getLogger(GetV1BatchResultsList.class.getName());
 
 	public GetV1BatchResultsList(String instanceUrl, String authToken) {
@@ -33,7 +33,7 @@ public class GetV1BatchResultsList extends AbstractAPIBase {
 	    CloseableHttpClient client = HttpClientBuilder.create().build();
 	    try {
 	    	// Substitute both the JobID and BatchId
-		    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(getURLFromURLTemplate(RESOURCE,"batchId",batchId),"jobId",jobId));
+		    URIBuilder builder = new URIBuilder(getInstanceUrl() + getURLFromURLTemplate(getURLFromURLTemplate(getVersionedResource(RESOURCE),"batchId",batchId),"jobId",jobId));
 
 	    	HttpGet getter = new HttpGet(builder.build());
 	    	

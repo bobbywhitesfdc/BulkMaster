@@ -47,10 +47,11 @@ class DataServicesVersionsTest {
 			assertNotEquals(latest.url,null);
 			assertNotEquals(latest.version,null);
 			
+			Double versionValue = Double.valueOf(latest.version);
+			assert(versionValue > 46.0 && versionValue < 200.0); // Being quite optimistic on the upper bound :-) 
+			
 		} catch (URISyntaxException | IOException | AuthenticationException e) {
-			// TODO Auto-generated catch block
 			fail("Execution error.  Exception: " + e.getMessage()); 
-
 		}
 	}
 
