@@ -12,7 +12,7 @@ public class SizeLimitedWriter extends BufferedWriter {
 	long lastMBAnnounced=0;
 	final long maxBytes;
 	private long maxRecords;
-	public static final String NEWLINE_SEPARATOR = System.getProperty("line.separator");
+	public static final String NEWLINE_SEPARATOR = "\n"; // Hardwire Unix style for consistency across all platforms
 	public static final int NEWLINE_SEPARATOR_LEN = NEWLINE_SEPARATOR.length();
 
 	public SizeLimitedWriter(Writer out) {
@@ -71,7 +71,7 @@ public class SizeLimitedWriter extends BufferedWriter {
 	public void newLine() throws IOException {
 		bytesWritten += NEWLINE_SEPARATOR_LEN;
 		++recordsWritten;
-		super.newLine();
+		write(NEWLINE_SEPARATOR);
 	}
 
 	public double getBytesWritten() {

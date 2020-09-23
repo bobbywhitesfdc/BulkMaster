@@ -11,3 +11,15 @@ scripts/
 scripts
 target
 output
+.circleci
+.editorconfig
+.images
+**/*.yml
+package.json
+src/commands
+src/index.ts
+tsconfig.json
+tslint.json
+messages
+test
+
