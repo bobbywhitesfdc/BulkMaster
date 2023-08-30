@@ -6,4 +6,4 @@
 elementFormDefault = XmlNsForm.QUALIFIED)  
 
 package bobby.sfdc.prototype.bulkv1.json;
-import javax.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.*;
