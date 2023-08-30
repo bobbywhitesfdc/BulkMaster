@@ -1,6 +1,6 @@
 package bobby.sfdc.prototype.bulkv1.json;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import bobby.sfdc.prototype.rest.AbstractJSONBody;
 
